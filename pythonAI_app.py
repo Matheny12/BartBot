@@ -39,10 +39,10 @@ if prompt := st.chat_input("What can I help you with?"):
 		st.markdown(f"**{USER_NAME}**: {prompt}")
 		
 	with st.chat_message("assistant"):
-		formatted_history = [
-			{"role": m["role"], "parts": [{"text": m["content"]}]}
-			for m in st.session_state.messages[:-1]
-		]
+		formatted_history = []
+		for m in st.session_state.messages[:-1]:
+			gemini_role = "model" if m["role"] == "assistant" else "user"
+			formatted_history.append({"role": gemini_role, "parts": [{"text": m["content"]}]})
 		try:
 			chat_session = get_chat_session()
 			response = chat_session.send_message(prompt)
