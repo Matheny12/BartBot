@@ -16,7 +16,6 @@ USER_NAME = "You"
 if "messages" not in st.session_state:
 	st.session_state.messages = []
 
-@st.cache_resource
 def get_chat_session():
     return client.chats.create(
         model="gemini-2.5-flash-lite",
