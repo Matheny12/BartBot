@@ -197,16 +197,17 @@ if st.session_state.active_chat_id:
 
 		with col_btn:
 			if uploaded_file:
-				st.session_state.pending_file = {
-					"bytes": uploaded_file.read(),
-					"mime": uploaded_file.type,
-					"name": uploaded_file.name
-				}
-				st.session_state.last_uploaded = uploaded_file.name
+				if st.button("Analyze", use_container_width=True, key=f"analyze_btn_{current_id}")
+					st.session_state.pending_file = {
+						"bytes": uploaded_file.read(),
+						"mime": uploaded_file.type,
+						"name": uploaded_file.name
+					}
+					st.session_state.last_uploaded = uploaded_file.name
 
-				messages.append({"role": "user", "content": f"Analyze this file: {uploaded_file.name}"})
-				save_data(all_data)
-				st.rerun()
+					messages.append({"role": "user", "content": f"Analyze this file: {uploaded_file.name}"})
+					save_data(all_data)
+					st.rerun()
 			else:
 				st.button("Analyze", disabled=True, use_container_width=True)
 
