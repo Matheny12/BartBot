@@ -120,10 +120,7 @@ def count_tokens(text_list):
 with st.sidebar:
 	st.write(f"Logged in as: **{username.capitalize()}**")
 	if st.button("Logout"):
-		try:
-			all_cookies = cookie_manager.get_all()
-		except:
-			pass
+		cookie_manager.delete("bartbot_user")
 		st.session_state.pop("username", None)
 		st.session_state.pop("active_chat_id", None)
 		st.rerun()
