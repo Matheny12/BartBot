@@ -69,6 +69,7 @@ if "username" not in st.session_state:
 					st.session_state.username = u_login
 					if remember_me:
 						cookie_manager.set("bartbot_user", u_login, expires_at=datetime.now() + timedelta(days=30))
+						time.sleep(0.5)
 					st.rerun()
 				else:
 					st.error("Invalid username or password")
