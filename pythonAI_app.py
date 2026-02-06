@@ -196,7 +196,7 @@ if st.session_state.active_chat_id:
 			)
 		with col_status:
 			if uploaded_file:
-				st.info(f"{uploaded_file.name}", icon="Yes")
+				st.info(f"{uploaded_file.name}")
 			else:
 				st.caption("Ready for files.")
 		
