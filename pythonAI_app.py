@@ -178,43 +178,35 @@ if st.session_state.active_chat_id:
 		with st.chat_message("assistant"):
 			if prompt.lower().startswith("/image"):
 				model_options = [
-					'imagen-4.0-generate-001',
-					'imagen-3.0-generate-002',
-					'gemini-3-pro-image-preview'
-				]
+					'imagen-4.0-generate-001'
+                ]
 				image_prompt = prompt[7:].strip()
 				success = False
-				for model_id in model_options:
-					try:
-						with st.spinner("Bartholemew is painting..."):
+                
+				with st.spinner("Bartholemew is painting..."):
+					for model_id in model_options:
+						try:
 							response = client.models.generate_images(
-								model=model_id,
-								prompt=image_prompt,
-								config=types.GenerateImagesConfig(
-									number_of_images=1,
-									aspect_ratio="1:1"
-								)
-							)
+                                model=model_id,
+                                prompt=image_prompt,
+                                config=types.GenerateImagesConfig(
+                                    number_of_images=1,
+                                    aspect_ratio="1:1"
+                                )
+                            )
 							img_data = response.generated_images[0].image.image_bytes
 							encoded_img = base64.b64encode(img_data).decode('utf-8')
-							st.image(img_data, caption=image_prompt)
-							st.download_button(
-											label="Download",
-											data=img_bytes,
-											file_name=f"bartbot_{i}.png",
-											mime="image/png",
-											key=f"download_btn_{current_id}_{i}"
-										)
 							messages.append({
-								"role": "assistant",
-								"content": f"IMAGE_DATA:{encoded_img}",
-								"caption": image_prompt
-							})
-							save_data(st.session_state.all_chats)
-							success = True
+                                "role": "assistant",
+                                "content": f"IMAGE_DATA:{encoded_img}",
+                                "caption": image_prompt
+                            })
+							save_data(all_data)
+							success = True                            
+							st.rerun() 
 							break
-					except:
-						continue
+						except Exception as e:
+							continue
 					
 				if not success:
 					st.error("Image generation failed with all models.")
