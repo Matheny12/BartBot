@@ -52,7 +52,7 @@ with st.sidebar:
 		col1, col2 = st.sidebar.columns([0.8, 0.2])
 
 		with col1:
-			if st.button(label, key=f"select_{chat_id}", use_container_width=True):
+			if st.button("X", key=f"select_{chat_id}", use_container_width=True):
 				st.session_state.active_chat_id = chat_id
 				st.rerun()
 		with col2:
