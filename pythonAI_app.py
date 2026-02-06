@@ -9,10 +9,13 @@ from google.genai import types
 DB_FILE = "bartbot_history.json"
 
 def load_data():
-	if os.path.exists(DB_FILE):
-		with open(DB_FILE,"r") as f:
-			return json.load(f)
-	return {}
+    if os.path.exists(DB_FILE):
+        with open(DB_FILE,"r") as f:
+            try:
+                return json.load(f)
+            except:
+                return {}
+    return {}
 
 def save_data(data):
 	with open (DB_FILE, "w") as f:
@@ -73,17 +76,17 @@ if st.session_state.active_chat_id:
 		with st.chat_message("user"):
 			st.markdown(f"**{USER_NAME}**: {prompt}")
 	
-	with st.chat_message("assistant"):
-		formatted_history = []
-		for m in messages[:-1]:
-			gemini_role = "model" if m["role"] == "assistant" else "user"
-			formatted_history.append({"role": gemini_role, "parts": [{"text": m["content"]}]})
-		try:
-			chat_session = get_chat_session(formatted_history)
-			response = chat_session.send_message(prompt)
-			st.markdown(f"**{BOT_NAME}**: {response.text}")
-			messages.append({"role": "assistant", "content": response.text})
-		except Exception as e:
-			st.error(f"Error: {e}")		
+		with st.chat_message("assistant"):
+			formatted_history = []
+			for m in messages[:-1]:
+				gemini_role = "model" if m["role"] == "assistant" else "user"
+				formatted_history.append({"role": gemini_role, "parts": [{"text": m["content"]}]})
+			try:
+				chat_session = get_chat_session(formatted_history)
+				response = chat_session.send_message(prompt)
+				st.markdown(f"**{BOT_NAME}**: {response.text}")
+				messages.append({"role": "assistant", "content": response.text})
+			except Exception as e:
+				st.error(f"Error: {e}")		
 else:
 	st.info("Click 'Start New Chat' in the sidebar to begin!")
