@@ -4,10 +4,25 @@ import time
 import uuid
 import base64
 import streamlit as st
+import extra_streamlit_components as stx
 from google import genai
 from google.genai import types
 from PIL import Image
 from io import BytesIO
+
+cookie_manager = stx.CookieManager()
+
+def get_logged_in_user():
+	if "username" in st.session_state:
+		return st.session_state.username
+	
+	saved_user = cookie_manager.get(cookie="bartbot_user")
+	if saved_user and saved_user in all_data:
+		st.session_state.username = saved_user
+		return saved_user
+	return None
+
+current_user = get_logged_in_user()
 
 DB_FILE = "bartbot_history.json"
 
@@ -33,9 +48,13 @@ if "username" not in st.session_state:
 	with tab1:
 		u_login = st.text_input("Username", key="l_user")
 		p_login = st.text_input("Password", type="password", key="l_pass")
+		remember_me = st.checkbox("Keep me logged in")
+
 		if st.button("Enter BartBot"):
 			if u_login in all_data and all_data[u_login].get("password") == p_login:
 				st.session_state.username = u_login
+				if remember_me:
+					cookie_manager.set("bartbot_user", u_login, expires_at=datetime.now() + timedelta(days=30))
 				st.rerun()
 			else:
 				st.error("Invalid username or password")
@@ -59,7 +78,7 @@ username = st.session_state.username
 if username not in all_data:
 	del st.session_state.username
 	st.rerun()
-	
+
 user_chats = all_data[username]["chats"]
 
 if st.session_state.get("active_chat_id") not in user_chats:
