@@ -44,7 +44,7 @@ with st.sidebar:
 		history = st.session_state.all_chats[chat_id]
 		label = history[0]["content"][:25] + "..." if history else "New Conversation"
 
-		if st.button(lable, key=chat_id, use_container_width=True):
+		if st.button(label, key=chat_id, use_container_width=True):
 			st.session_state.active_chat_id = chat_id
 			st.rerun()
 
