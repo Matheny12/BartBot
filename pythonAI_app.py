@@ -227,20 +227,20 @@ if st.session_state.active_chat_id:
 					
 				if not success:
 					st.error("Image generation failed with all models.")
-	else:
-		recent_messages = messages[-20:]
-		formatted_history = []
-		for m in recent_messages[:-1]:
-			gemini_role = "model" if m["role"] == "assistant" else "user"
-			formatted_history.append({"role": gemini_role, "parts": [{"text": m["content"]}]})
-		try:
-			chat_session = get_chat_session(formatted_history)
-			response = chat_session.send_message(prompt)
-			st.markdown(f"**{BOT_NAME}**: {response.text}")
-			messages.append({"role": "assistant", "content": response.text})
-			save_data(all_data)
-			st.rerun()
-		except Exception as e:
-			st.error(f"Error: {e}")		
+			else:
+				recent_messages = messages[-20:]
+				formatted_history = []
+				for m in recent_messages[:-1]:
+					gemini_role = "model" if m["role"] == "assistant" else "user"
+					clean_text = m["content"] if not str(m["content"]).startswith("IMAGE_DATA:") else "[Image]"
+					formatted_history.append({"role": gemini_role, "parts": [{"text": clean_text}]})
+				try:
+					chat_session = get_chat_session(formatted_history)
+					response = chat_session.send_message(last_user_meg if 'last_user_msg' in locals() else last_prompt)
+					messages.append({"role": "assistant", "content": response.text})
+					save_data(all_data)
+					st.rerun()
+				except Exception as e:
+					st.error(f"Error: {e}")		
 else:
 	st.info("Click 'Start New Chat' in the sidebar to begin!")
