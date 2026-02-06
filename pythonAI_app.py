@@ -16,7 +16,7 @@ cookie_manager = stx.CookieManager()
 def format_math_content(text):
 	if not isinstance(text, str):
 		return text
-	text = text.replace(r"\[", "$$").replace(r"\]", "$$")")
+	text = text.replace(r"\[", "$$").replace(r"\]", "$$")
 	text = text.replace(r"\(", "$").replace(r"\)", "$")
 	return text
 
