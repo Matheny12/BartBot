@@ -185,7 +185,7 @@ if st.session_state.active_chat_id:
 
 	with st.container():
 		st.markdown('<div class="floating-uploader"></div>', unsafe_allow_html=True)
-		col_file, col_status, col_btn = st.columns([0.4, 0.6])
+		col_file, col_btn = st.columns([0.4, 0.6])
 
 		with col_file:
 			uploaded_file = st.file_uploader(
@@ -196,7 +196,6 @@ if st.session_state.active_chat_id:
 			)
 
 		with col_btn:
-
 			if uploaded_file:
 				st.session_state.pending_file = {
 					"bytes": uploaded_file.read(),
@@ -213,13 +212,6 @@ if st.session_state.active_chat_id:
 
 		if not uploaded_file and "last_uploaded" in st.session_state:
 			del st.session_state.last_uploaded
-
-		with col_status:
-			if uploaded_file:
-				st.info(f"{uploaded_file.name}")
-			else:
-				st.caption("Ready for files.")
-
 		
 	def get_chat_session(history_to_send):
 		return client.chats.create(
