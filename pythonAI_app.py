@@ -11,34 +11,6 @@ from google.genai import types
 from PIL import Image
 from io import BytesIO
 
-cookie_manager = stx.CookieManager(key="bartbot_cookie_manager")
-
-all_cookies = cookie_manager.get_all()
-
-def format_math_content(text):
-	if not isinstance(text, str):
-		return text
-	text = text.replace(r"\[", "$$").replace(r"\]", "$$")
-	text = text.replace(r"\(", "$").replace(r"\)", "$")
-	return text
-
-all_data = load_data()
-
-def get_logged_in_user(cookies_dict):
-	if "username" in st.session_state:
-		return st.session_state.username
-	
-	if cookies_dict and "bartbot_user" in cookies_dict:
-		saved_user = cookies_dict["bartbot_user"]
-		if saved_user in all_data:
-			st.session_state.username = saved_user
-			return saved_user
-	return None
-
-current_user = get_logged_in_user(all_cookies)
-
-DB_FILE = "bartbot_history.json"
-
 def load_data():
     if os.path.exists(DB_FILE):
         with open(DB_FILE,"r") as f:
@@ -52,7 +24,31 @@ def save_data(data):
 	with open (DB_FILE, "w") as f:
 		json.dump(data, f, indent=4)
 
+def format_math_content(text):
+	if not isinstance(text, str):
+		return text
+	text = text.replace(r"\[", "$$").replace(r"\]", "$$")
+	text = text.replace(r"\(", "$").replace(r"\)", "$")
+	return text
+
+def get_logged_in_user(cookies_dict):
+	if "username" in st.session_state:
+		return st.session_state.username
+	
+	if cookies_dict and "bartbot_user" in cookies_dict:
+		saved_user = cookies_dict["bartbot_user"]
+		if saved_user in all_data:
+			st.session_state.username = saved_user
+			return saved_user
+	return None
+
+cookie_manager = stx.CookieManager(key="bartbot_cookie_manager")
+all_cookies = cookie_manager.get_all()
+
 all_data = load_data()
+current_user = get_logged_in_user(all_cookies, all_data)
+
+DB_FILE = "bartbot_history.json"
 
 if "username" not in st.session_state:
 	all_cookies = cookie_manager.get_all()
