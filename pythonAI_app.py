@@ -215,7 +215,7 @@ if st.session_state.active_chat_id:
 				if not success:
 					st.error("Image generation failed with all models.")
 			else:
-				recent_messages = message[-20:]
+				recent_messages = messages[-20:]
 				formatted_history = []
 				for m in recent_messages[:-1]:
 					gemini_role = "model" if m["role"] == "assistant" else "user"
