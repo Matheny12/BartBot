@@ -168,11 +168,19 @@ if st.session_state.active_chat_id:
 	current_id = st.session_state.active_chat_id
 	messages = user_chats[current_id]
 
-	uploaded_file = st.file_uploader(
-		"Add a file",
-		type=["pdf", "txt", "png", "jpg", "jpeg", "py", "csv"],
-		label_visibility="collapsed"
-	)
+	col_file, col_status = st.columns([0.4, 0.6])
+
+	with col_file:
+		uploaded_file = st.file_uploader(
+			"Upload",
+			type=["pdf", "txt", "png", "jpg", "jpeg", "py", "csv"],
+			label_visibility="collapsed",
+			key=f"file_up_{st.session_state.active_chat_id}"
+		)
+
+	with col_status:
+		if uploaded_file:
+			st.info(f"{uploaded_file.name}", icon="Yes")
 	
 	def get_chat_session(history_to_send):
 		return client.chats.create(
