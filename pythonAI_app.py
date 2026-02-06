@@ -152,23 +152,23 @@ if st.session_state.active_chat_id:
 			history=history_to_send
 	    )
 	
-for i, message in enumerate(messages):
-	name = USER_NAME if message["role"] == "user" else BOT_NAME
-	with st.chat_message(message["role"]):
-		content = message["content"]
-		if isinstance(content, str) and content.startswith("IMAGE_DATA:"):
-			base64_str = content.replace("IMAGE_DATA:", "")
-			img_bytes = base64.b64decode(base64_str)
-			st.image(img_bytes, caption=message.get("caption", ""))
-			st.download_button(
-				label="Download",
-				data=img_bytes,
-				file_name=f"bartbot_{i}.png",
-				mime="image/png",
-				key=f"download_btn_{current_id}_{i}"
-			)
-		else:
-			st.markdown(f"**{name}**: {content}")
+	for i, message in enumerate(messages):
+		name = USER_NAME if message["role"] == "user" else BOT_NAME
+		with st.chat_message(message["role"]):
+			content = message["content"]
+			if isinstance(content, str) and content.startswith("IMAGE_DATA:"):
+				base64_str = content.replace("IMAGE_DATA:", "")
+				img_bytes = base64.b64decode(base64_str)
+				st.image(img_bytes, caption=message.get("caption", ""))
+				st.download_button(
+					label="Download",
+					data=img_bytes,
+					file_name=f"bartbot_{i}.png",
+					mime="image/png",
+					key=f"download_btn_{current_id}_{i}"
+				)
+			else:
+				st.markdown(f"**{name}**: {content}")
 
 	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
 		messages.append({"role": "user", "content": prompt})
