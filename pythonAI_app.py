@@ -88,7 +88,7 @@ if st.session_state.active_chat_id:
 				base64_str = content.replace("IMAGE_DATA:", "")
 				img_bytes = base64.b64decode(base64_str)
 				st.image(img_bytes, caption=message.get("caption", ""))
-				st.download_button("Download", img_bytes, f"{caption}.png", "image/png", key=uuid.uuid4().hex)
+				st.download_button("Download", img_bytes, f"{message.get("caption", "")}.png", "image/png", key=uuid.uuid4().hex)
 			else:
 				st.markdown(f"**{name}**: {content}")
 
