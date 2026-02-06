@@ -77,6 +77,24 @@ if st.session_state.active_chat_id:
 			st.markdown(f"**{USER_NAME}**: {prompt}")
 	
 		with st.chat_message("assistant"):
+			if prompt.lower().startswith("/image"):
+				try:
+					with st.spinner("Bartholemew is painting..."):
+						image_prompt = prompt[7:]
+						response = client.models.generate_images(
+							model='imagen-3.0-generate-001',
+							prompt=image_prompt,
+							config=types.GenerateImagesConfig(number_of_images=1)
+						)
+
+						generated_image = response.generated_images[0]
+						st.image(generated_image.image.image_bytes, caption=image_prompt)
+
+						messages.append({"role": "assistant", "content": f"Generated Image: {image_prompt}"})
+						save_data(st.session_state.all_chats)
+				except Exception as e:
+					st.error(f"Image Error: {e}")
+
 			formatted_history = []
 			for m in messages[:-1]:
 				gemini_role = "model" if m["role"] == "assistant" else "user"
