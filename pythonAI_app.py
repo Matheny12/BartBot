@@ -55,6 +55,11 @@ if "username" not in st.session_state:
 	st.stop()
 
 username = st.session_state.username
+
+if username not in all_data:
+	del st.session_state.username
+	st.rerun()
+	
 user_chats = all_data[username]["chats"]
 
 if st.session_state.get("active_chat_id") not in user_chats:
