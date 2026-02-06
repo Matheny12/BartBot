@@ -96,6 +96,10 @@ if "all_chats" not in st.session_state:
 if "active_chat_id" not in st.session_state:
 	st.session_state.active_chat_id = None
 
+def count_tokens(text_list):
+	total_chars = sum(len(m["content"]) for m in text_list if isinstance(m["content"], str"))
+	return total_chars // 4
+
 with st.sidebar:
 	st.write(f"Logged in as: **{username.capitalize()}**")
 	if st.button("Logout"):
@@ -106,6 +110,13 @@ with st.sidebar:
 		st.session_state.pop("username", None)
 		st.session_state.pop("active_chat_id", None)
 		st.rerun()
+
+		if st.session_state.get("active_chat_id"):
+			st.divider()
+			current_tokens = count_tokens(user_chats[st.session_state.active_chat_id])
+			st.metric("Estimated Tokens", f"{current_tokens:,}", help="Limit is 1,048,576")
+			if current_tokens > 800000:
+				st.warning("Getting close to the token limit, consider creating a new session soon.")
 
 	st.divider()
 
@@ -176,6 +187,8 @@ if st.session_state.active_chat_id:
 
 	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
 		messages.append({"role": "user", "content": prompt})
+		save_data(all_data)
+		st.rerun()
 		with st.chat_message("user"):
 			st.markdown(f"**{USER_NAME}**: {prompt}")
 	
