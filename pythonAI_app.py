@@ -15,7 +15,6 @@ cookie_manager = stx.CookieManager(key="bartbot_cookie_manager")
 
 all_cookies = cookie_manager.get_all()
 
-
 def format_math_content(text):
 	if not isinstance(text, str):
 		return text
@@ -23,14 +22,14 @@ def format_math_content(text):
 	text = text.replace(r"\(", "$").replace(r"\)", "$")
 	return text
 
+all_data = load_data()
+
 def get_logged_in_user(cookies_dict):
 	if "username" in st.session_state:
 		return st.session_state.username
 	
-	
 	if cookies_dict and "bartbot_user" in cookies_dict:
 		saved_user = cookies_dict["bartbot_user"]
-		all_data = load_data()
 		if saved_user in all_data:
 			st.session_state.username = saved_user
 			return saved_user
