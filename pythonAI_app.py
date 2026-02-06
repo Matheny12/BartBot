@@ -194,11 +194,27 @@ if st.session_state.active_chat_id:
 				label_visibility="collapsed",
 				key=f"sticky_up_{current_id}"
 			)
+		if uploaded_file:
+			st.session_state.pending_file = {
+				"bytes": uploaded_file.read(),
+				"mime": uploaded_file.type,
+				"name": uploaded_file.name
+			}
+			st.session_state.last_uploaded = uploaded_file.name
+
+			messages.append({"role": "user", "content": f"Analyze this file: {uploaded_file.name}"})
+			save_data(all_data)
+			st.rerun()
+
+		if not uploaded_file and "last_uploaded" in st.session_state:
+			del st.session_state.last_uploaded
+
 		with col_status:
 			if uploaded_file:
 				st.info(f"{uploaded_file.name}")
 			else:
 				st.caption("Ready for files.")
+
 		
 	def get_chat_session(history_to_send):
 		return client.chats.create(
@@ -232,13 +248,6 @@ if st.session_state.active_chat_id:
 				st.markdown(f"**{name}**: {content}")
 
 	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
-		if uploaded_file:
-			st.session_state.pending_file = {
-				"bytes": uploaded_file.read(),
-				"mime": uploaded_file.type,
-				"name": uploaded_file.name
-			}
-
 		messages.append({"role": "user", "content": prompt})
 		save_data(all_data)
 		st.rerun()
