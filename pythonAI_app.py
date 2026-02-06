@@ -11,6 +11,8 @@ from google.genai import types
 from PIL import Image
 from io import BytesIO
 
+DB_FILE = "bartbot_history.json"
+
 def load_data():
     if os.path.exists(DB_FILE):
         with open(DB_FILE,"r") as f:
@@ -48,7 +50,6 @@ all_cookies = cookie_manager.get_all()
 all_data = load_data()
 current_user = get_logged_in_user(all_cookies, all_data)
 
-DB_FILE = "bartbot_history.json"
 
 if "username" not in st.session_state:
 	all_cookies = cookie_manager.get_all()
