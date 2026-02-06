@@ -53,38 +53,39 @@ current_user = get_logged_in_user(all_cookies, all_data)
 if "username" not in st.session_state:
 	if not all_cookies and "init_waited" not in st.session_state:
 		st.session_state.init_waited = True
+		time.sleep(0.5)
 		st.rerun()
+	if not current_user:
+		st.title("Welcome to BartBot")
+		tab1, tab2 = st.tabs(["Login", "Create Account"])
 
-	st.title("Welcome to BartBot")
-	tab1, tab2 = st.tabs(["Login", "Create Account"])
+		with tab1:
+			u_login = st.text_input("Username", key="l_user")
+			p_login = st.text_input("Password", type="password", key="l_pass")
+			remember_me = st.checkbox("Keep me logged in")
 
-	with tab1:
-		u_login = st.text_input("Username", key="l_user")
-		p_login = st.text_input("Password", type="password", key="l_pass")
-		remember_me = st.checkbox("Keep me logged in")
+			if st.button("Enter BartBot"):
+				if u_login in all_data and all_data[u_login].get("password") == p_login:
+					st.session_state.username = u_login
+					if remember_me:
+						cookie_manager.set("bartbot_user", u_login, expires_at=datetime.now() + timedelta(days=30))
+					st.rerun()
+				else:
+					st.error("Invalid username or password")
 
-		if st.button("Enter BartBot"):
-			if u_login in all_data and all_data[u_login].get("password") == p_login:
-				st.session_state.username = u_login
-				if remember_me:
-					cookie_manager.set("bartbot_user", u_login, expires_at=datetime.now() + timedelta(days=30))
-				st.rerun()
-			else:
-				st.error("Invalid username or password")
-
-	with tab2:
-		u_new = st.text_input("Choose Username", key="n_user")
-		p_new = st.text_input("Choose Password", type="password", key="n_pass")
-		if st.button("Register"):
-			if u_new in all_data:
-				st.error("Username already exists!")
-			elif u_new and p_new:
-				all_data[u_new] = {"password": p_new, "chats": {}}
-				save_data(all_data)
-				st.success("Account Created! Please login now.")
-			else:
-				st.warning("Please fill in both fields.")
-	st.stop()
+		with tab2:
+			u_new = st.text_input("Choose Username", key="n_user")
+			p_new = st.text_input("Choose Password", type="password", key="n_pass")
+			if st.button("Register"):
+				if u_new in all_data:
+					st.error("Username already exists!")
+				elif u_new and p_new:
+					all_data[u_new] = {"password": p_new, "chats": {}}
+					save_data(all_data)
+					st.success("Account Created! Please login now.")
+				else:
+					st.warning("Please fill in both fields.")
+		st.stop()
 
 username = st.session_state.username
 
