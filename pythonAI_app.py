@@ -24,6 +24,8 @@ def save_data(data):
 	with open (DB_FILE, "w") as f:
 		json.dump(data, f, indent=4)
 
+all_data = load_data()
+
 if "username" not in st.session_state:
 	st.title("Welcome to BartBot")
 	tab1, tab2 = st.tabs(["Login", "Create Account"])
