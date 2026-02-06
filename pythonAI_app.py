@@ -35,7 +35,7 @@ def get_logged_in_user(cookies_dict):
 			return saved_user
 	return None
 
-current_user = get_logged_in_user()
+current_user = get_logged_in_user(cookies_dict)
 
 DB_FILE = "bartbot_history.json"
 
