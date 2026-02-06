@@ -185,7 +185,7 @@ if st.session_state.active_chat_id:
 
 	with st.container():
 		st.markdown('<div class="floating-uploader"></div>', unsafe_allow_html=True)
-		col_file, col_status = st.columns([0.4, 0.6])
+		col_file, col_status, col_btn = st.columns([0.4, 0.6])
 
 		with col_file:
 			uploaded_file = st.file_uploader(
@@ -194,17 +194,22 @@ if st.session_state.active_chat_id:
 				label_visibility="collapsed",
 				key=f"sticky_up_{current_id}"
 			)
-		if uploaded_file:
-			st.session_state.pending_file = {
-				"bytes": uploaded_file.read(),
-				"mime": uploaded_file.type,
-				"name": uploaded_file.name
-			}
-			st.session_state.last_uploaded = uploaded_file.name
 
-			messages.append({"role": "user", "content": f"Analyze this file: {uploaded_file.name}"})
-			save_data(all_data)
-			st.rerun()
+		with col_btn:
+
+			if uploaded_file:
+				st.session_state.pending_file = {
+					"bytes": uploaded_file.read(),
+					"mime": uploaded_file.type,
+					"name": uploaded_file.name
+				}
+				st.session_state.last_uploaded = uploaded_file.name
+
+				messages.append({"role": "user", "content": f"Analyze this file: {uploaded_file.name}"})
+				save_data(all_data)
+				st.rerun()
+			else:
+				st.button("Analyze", disabled=True, use_container_width=True)
 
 		if not uploaded_file and "last_uploaded" in st.session_state:
 			del st.session_state.last_uploaded
