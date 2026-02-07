@@ -244,7 +244,8 @@ if st.session_state.active_chat_id:
 					"When editing a file, provide the full updated content "
 					"inside triple backticks. for complex math, physics, or "
 					"data analysis, ALWAYS use the code_execution tool to "
-					"calculate the exact result",
+					"calculate the exact result. Also for any math, don't "
+					"round numbers until the final solution.",
 				),
         	    tools=[types.Tool(google_search=types.GoogleSearch())]
         	),
