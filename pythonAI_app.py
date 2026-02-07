@@ -242,7 +242,9 @@ if st.session_state.active_chat_id:
 					"double dollar signs for blocks and single dollar signs "
 					"for inline equations. You can create and edit files. "
 					"When editing a file, provide the full updated content "
-					"inside triple backticks.",
+					"inside triple backticks. for complex math, physics, or "
+					"data analysis, ALWAYS use the code_execution tool to "
+					"calculate the exact result",
 				),
         	    tools=[types.Tool(google_search=types.GoogleSearch())]
         	),
