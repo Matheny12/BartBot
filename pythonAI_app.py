@@ -446,10 +446,11 @@ if st.session_state.active_chat_id:
 					with st.spinner("Refining prompt for the artist..."):
 						refine_chat = client.chats.create(model="gemini-2.5-flash-lite")
 						refine_res = refine_chat.send_message(
-								f"Describe the physical appearance of this person/scene in extreme detail for an artist, "
-								f"focusing on lighting, clothes, and facial features. "
-								f"DO NOT use their name in the output: '{image_prompt}'"
-						)
+								"You are an artist's prompt engineer. Create a highly detailed, "
+                                "cinematic physical description of the following subject. "
+                                "IMPORTANT: Remove all names of real people, politicians, or celebrities. "
+                                "Describe their facial features, hair, clothing, and the lighting style "
+                                f"generically so an artist can paint it without knowing who it is: '{image_prompt}'"						)
 						if refine_res.text:
 							safe_prompt = refine_res.text
 				except Exception as e:
