@@ -216,7 +216,7 @@ with st.sidebar:
 	elif st.session_state.visitor_id:
 		chat_ids_to_display = list(st.session_state.visitor_chats.keys())
 
-	if st.button("Start New Chats", use_container_width=True):
+	if st.button("Start New Chat", use_container_width=True):
 		new_id = str(uuid.uuid4())
 		if st.session_state.username:
 			user_chats[new_id] = []
@@ -234,13 +234,6 @@ with st.sidebar:
 				st.warning("Getting close to the token limit, consider creating a new session soon.")
 
 	st.divider()
-
-	if st.button("Start New Chat", use_container_width=True):
-		new_id = str(uuid.uuid4())
-		user_chats[new_id] = []
-		st.session_state.active_chat_id = new_id
-		save_data(all_data)
-		st.rerun()
 	
 	chat_ids = list(user_chats.keys())
 
