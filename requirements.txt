@@ -1,3 +1,5 @@
 extra-streamlit-components
 streamlit
 google-genai
+streamlit-paste-button
+Pillow
