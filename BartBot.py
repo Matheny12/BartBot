@@ -196,10 +196,11 @@ with st.sidebar:
 		st.write(f"Logged in as: **{st.session_state.username.capitalize()}**")
 		if st.button("Logout"):
 			st.session_state.logging_out = True
-			try:
-				cookie_manager.delete("bartbot_user")
-			except Exception:
-				pass
+			if all_cookies and "bartbot_user" in all_cookies:
+				try:
+					cookie_manager.delete("bartbot_user")
+				except Exception:
+					pass
 			for key in list(st.session_state.keys()):
 				del st.session_state[key]
 			st.rerun()
