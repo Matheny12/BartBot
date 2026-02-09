@@ -394,12 +394,14 @@ if st.session_state.active_chat_id:
 				with st.spinner("Bartholemew is painting..."):
 					for model_id in model_options:
 						try:
+							refined_promped = f"A professional, neutral photograph of {image_prompt}"
 							response = client.models.generate_images(
                                 model=model_id,
                                 prompt=image_prompt,
                                 config=types.GenerateImagesConfig(
                                     number_of_images=1,
                                     aspect_ratio="1:1"
+									safty_filter_level="BLOCK_ONLY_HIGH"
                                 )
                             )
 							img_data = response.generated_images[0].image.image_bytes
@@ -414,7 +416,10 @@ if st.session_state.active_chat_id:
 							st.rerun() 
 							break
 						except Exception as e:
+							last_error = str(e)
 							continue
+				if not success:
+					st.error(f"Failed. Reason: {last_error}")
 					
 				if not success:
 					st.error("Image generation failed with all models.")
