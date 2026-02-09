@@ -262,29 +262,30 @@ with st.sidebar:
 st.title("BartBot")
 
 st.markdown("""
-	<style>
-	[data-testid="stVerticalBlock"] > div:has(div.floating-uploader) {
-		position: fixed;
-		right: 20pxl
-        top: 100px;
-		bottom: 100px;
-        width: 200px;
-        z-index: 999;
-        background-color: rgba(30, 30, 30, 0.9);
+    <style>
+    [data-testid="stVerticalBlock"] > div:has(div.floating-uploader) {
+        position: fixed;
+        right: 2vw;
+        top: 25%;
+        width: 220px;
+        z-index: 1000;
+        background-color: rgba(33, 33, 33, 0.9);
         padding: 20px;
-        border-radius: 15px;
+        border-radius: 20px;
         border: 1px solid #444;
-		display: flex;
-		flex-direction: column;
-		justify-content: flex-start;
-		overflow-y: auto;
-	}
-			
-	[data-testid="stVerticalBlock"] > div:has(div.floating-uploader) [data-testid="column"] {
+        box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
+    }
+
+    [data-testid="stVerticalBlock"] > div:has(div.floating-uploader) [data-testid="column"] {
         width: 100% !important;
         flex: 1 1 auto !important;
         min-width: 100% !important;
-	</style>		
+    }
+    
+    .stFileUploader section {
+        padding: 0 !important;
+    }
+    </style>        
 """, unsafe_allow_html=True)
 
 if st.session_state.active_chat_id:
