@@ -401,7 +401,7 @@ if st.session_state.active_chat_id:
                                     number_of_images=1,
                                     aspect_ratio="1:1",
 									person_generation="ALLOW_ADULT",
-									safety_filter_level="BLOCK_ONLY_HIGH"                                )
+									safety_filter_level="BLOCK_LOW_AND_ABOVE"                                )
                             )
 							img_data = response.generated_images[0].image.image_bytes
 							encoded_img = base64.b64encode(img_data).decode('utf-8')
