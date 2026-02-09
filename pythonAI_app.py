@@ -266,7 +266,7 @@ st.markdown("""
     [data-testid="stVerticalBlock"] > div:has(div.floating-uploader) {
         position: fixed;
         right: 2vw;
-        top: 60%;
+        top: 30%;
         width: 360px;
 		height: 400px;
         z-index: 1000;
