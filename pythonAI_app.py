@@ -400,7 +400,7 @@ if st.session_state.active_chat_id:
                                 prompt=image_prompt,
                                 config=types.GenerateImagesConfig(
                                     number_of_images=1,
-                                    aspect_ratio="1:1"
+                                    aspect_ratio="1:1",
 									safty_filter_level="BLOCK_ONLY_HIGH"
                                 )
                             )
