@@ -264,18 +264,26 @@ st.title("BartBot")
 st.markdown("""
 	<style>
 	[data-testid="stVerticalBlock"] > div:has(div.floating-uploader) {
-		position: sticky;
-        top: 3rem;
+		position: fixed;
+		right: 20pxl
+        top: 100px;
+		bottom: 100px;
+        width: 200px;
         z-index: 999;
         background-color: rgba(30, 30, 30, 0.9);
-        padding: 15px;
+        padding: 20px;
         border-radius: 15px;
         border: 1px solid #444;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
-        width: 350px;
-        margin-left: auto;
-        margin-right: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		overflow-y: auto;
 	}
+			
+	[data-testid="stVerticalBlock"] > div:has(div.floating-uploader) [data-testid="column"] {
+        width: 100% !important;
+        flex: 1 1 auto !important;
+        min-width: 100% !important;
 	</style>		
 """, unsafe_allow_html=True)
 
