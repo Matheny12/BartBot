@@ -399,31 +399,35 @@ if st.session_state.active_chat_id:
 		)
 
 	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
+		if "last_pasted_hash" in st.session_state:
+			del st.session_state.last_pasted_hash
 		messages.append({"role": "user", "content": prompt})
 		save_data(all_data)
 		st.rerun()
 		
-	if "processed_pastes" not in st.session_state:
-		st.session_state.processed_pastes = set()
-
 	if pasted_output and pasted_output.image_data is not None:
 		import hashlib
 		img_bytes_raw = pasted_output.image_data.tobytes()
 		img_hash = hashlib.md5(img_bytes_raw).hexdigest()
 		
-		if img_hash not in st.session_state.processed_pastes:
+		if st.session_state.get("last_pasted_hash") != img_hash:
 			st.session_state.processed_pastes.add(img_hash)
 			img = pasted_output.image_data
 			buffered = BytesIO()
 			img.save(buffered, format="PNG")
 			img_bytes = buffered.getvalue()
 			encoded_img = base64.b64encode(img_bytes).decode('utf-8')
-			
+		
 			messages.append({
 				"role": "user", 
 				"content": f"IMAGE_DATA:{encoded_img}",
 				"caption": "Pasted Image"
 			})
+			st.session_state.pending_file = {
+        	    "bytes": img_bytes,
+        	    "mime": "image/png",
+        	    "name": "pasted_image.png"
+        	}
 			
 			messages.append({"role": "user", "content": "Analyze this pasted image."})
 			save_data(all_data)
