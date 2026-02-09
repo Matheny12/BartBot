@@ -265,16 +265,16 @@ st.markdown("""
 	<style>
 	[data-testid="stVerticalBlock"] > div:has(div.floating-uploader) {
 		position: sticky;
-		top: 3rem;
-		z-index: 999;
-		background-color: rgba(0, 0, 0, 0.5);
-		padding: 15px;
-		border-radius: 15px;
-		border: 1px solid #444;
-		box-shadow: 0px 4px 6px rgba(0,0,0,0,1)	
-		width: 350px;
-		margin-left: auto;
-		margin-right: 0
+        top: 3rem;
+        z-index: 999;
+        background-color: rgba(30, 30, 30, 0.9);
+        padding: 15px;
+        border-radius: 15px;
+        border: 1px solid #444;
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
+        width: 350px;
+        margin-left: auto;
+        margin-right: 0;
 	}
 	</style>		
 """, unsafe_allow_html=True)
