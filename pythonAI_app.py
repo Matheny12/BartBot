@@ -61,13 +61,12 @@ def get_logged_in_user(cookies_dict, data):
 	if st.session_state.get("logging_out"):
 		return None
 	
-	if "username" in st.session_state:
+	if st.session_state.get("username"):
 		return st.session_state.username
 	
 	if cookies_dict and "bartbot_user" in cookies_dict:
 		saved_user = cookies_dict["bartbot_user"]
 		if saved_user in data:
-			st.session_state.username = saved_user
 			return saved_user
 	return None
 
@@ -92,15 +91,10 @@ if "logging_out" not in st.session_state:
 if "visitor_chats" not in st.session_state:
 	st.session_state.visitor_chats = {}
 
-if current_user and not st.session_state.username:
-	st.session_state.username - current_user
+if current_user and not st.session_state.username and not st.session_state.visitor_id:
+    st.session_state.username = current_user
 
 if not st.session_state.username and not st.session_state.visitor_id:
-	if not all_cookies and "init_waited" not in st.session_state:
-		st.session_state.init_waited = True
-		time.sleep(0.5)
-		st.rerun()
-
 	st.title("Welcome to BartBot")
 	tab1, tab2, tab3 = st.tabs(["Login", "Create Account", "Continue as Visitor"])
 
@@ -209,17 +203,16 @@ with st.sidebar:
 			st.session_state.logging_out = True
 			cookie_manager.delete("bartbot_user")
 			for key in list(st.session_state.keys()):
-				if key != "logging_out":
-					del st.session_state[key]
+				del st.session_state[key]
 			st.rerun()
 	elif st.session_state.visitor_id:
 		st.write(f"Visitor Mode: **{st.session_state.visitor_id}**")
 		st.warning("Your chats will not be saved.")
 		if st.button("End Visitor Session"):
-			for key in ["visitor_id", "active_chat_id", "visitor_chats", "is_visitor"]:
-				if key in st.session_state[key]:
+			keys_to_clear = ["visitor_id", "active_chat_id", "visitor_chats"]
+			for key in keys_to_clear:
+				if key in st.session_state:
 					del st.session_state[key]
-			st.session_state.logging_out = True
 			st.rerun()
 	st.divider()
 
