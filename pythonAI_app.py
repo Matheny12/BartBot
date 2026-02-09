@@ -390,14 +390,26 @@ if st.session_state.active_chat_id:
                 ]
 				image_prompt = last_prompt[7:].strip()
 				success = False
-
-				with st.spinner("Refining prompt for the artist..."):
-					refine_chat = client.chats.create(model="gemini-2.5-flash-lite")
-					refine_res = refine_chat.send_message(
-						f"Rewrite this image prompt to be a highly detailed physical description "
-            			f"WITHOUT using any proper names of people: '{image_prompt}'"
-					)
-					safe_prompt = refine_res.text
+				try:
+					with st.spinner("Refining prompt for the artist..."):
+						refine_config = types.GenerateContentConfig(
+								safety_settings=[
+									types.SafetySetting(category="HATE_SPEECH", threshold="BLOCK_NONE"),
+									types.SafetySetting(category="HARASSMENT", threshold="BLOCK_NONE"),
+									types.SafetySetting(category="SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+									types.SafetySetting(category="DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+								]
+							)
+						refine_chat = client.chats.create(model="gemini-2.5-flash-lite")
+						refine_res = refine_chat.send_message(
+								f"Describe the physical appearance of this person/scene in extreme detail for an artist, "
+								f"focusing on lighting, clothes, and facial features. "
+								f"DO NOT use their name in the output: '{image_prompt}'"
+						)
+						if refine_res.text:
+							safe_prompt = refine_res.text
+				except Exception as e:
+					st.warning("Refine error, using original prompt.")
 
 				with st.spinner("Bartholemew is painting..."):
 					for model_id in model_options:
