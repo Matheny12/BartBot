@@ -350,7 +350,9 @@ if st.session_state.active_chat_id:
 					"inside triple backticks. for complex math, physics, or "
 					"data analysis, ALWAYS use the code_execution tool to "
 					"calculate the exact result. Also for any math, don't "
-					"round numbers until the final solution.",
+					"round numbers until the final solution."
+					"You can see and analyze images and files provided by "
+					"the user. ",
 				),
         	    tools=[types.Tool(google_search=types.GoogleSearch())]
         	),
