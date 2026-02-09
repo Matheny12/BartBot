@@ -390,6 +390,7 @@ if st.session_state.active_chat_id:
                 ]
 				image_prompt = last_prompt[7:].strip()
 				success = False
+				safe_prompt = image_prompt
 				try:
 					with st.spinner("Refining prompt for the artist..."):
 						refine_config = types.GenerateContentConfig(
