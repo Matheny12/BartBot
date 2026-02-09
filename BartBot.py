@@ -198,7 +198,7 @@ with st.sidebar:
 			st.session_state.logging_out = True
 			try:
 				cookie_manager.delete("bartbot_user")
-			except:
+			except Exception:
 				pass
 			for key in list(st.session_state.keys()):
 				del st.session_state[key]
