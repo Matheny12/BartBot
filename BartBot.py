@@ -7,11 +7,10 @@ import re
 import streamlit as st
 import extra_streamlit_components as stx
 from datetime import datetime, timedelta
-from google import genai
-from google.genai import types
 from PIL import Image
 from io import BytesIO
 from streamlit_paste_button import paste_image_button
+from model_factory import get_model
 
 DB_FILE = "bartbot_history.json"
 
@@ -178,11 +177,32 @@ if st.session_state.username and st.session_state.username not in all_data:
     del st.session_state.username
     st.rerun()
 
-API_KEY = st.secrets.get("GEMINI_KEY")
-client = genai.Client(api_key=API_KEY)
+if "model" not in st.session_state:
+    st.session_state.model = get_model("gemini")
+
+model = st.session_state.model
 
 BOT_NAME = "Bartholemew"
 USER_NAME = "You"
+
+SYSTEM_PROMPT = (
+    f"Your name is {BOT_NAME}. You are a witty AI assistant."
+    "When performing math, always use LaTeX notation with "
+    "double dollar signs for blocks and single dollar signs "
+    "for inline equations. You can create and edit files. "
+    "When editing a file, provide the full updated content "
+    "inside triple backticks. for complex math, physics, or "
+    "data analysis, ALWAYS use the code_execution tool to "
+    "calculate the exact result. Also for any math, don't "
+    "round numbers until the final solution."
+    "You can see and analyze images and files provided by "
+    "the user. You must state something along the lines of "
+    "you were trained and developed by Tyler Matheny, "
+    "God of all Barts/Bartholemews. It can be worded "
+    f"differently each time. You are called {BOT_NAME} because of "
+    "Tyler Matheny's favorite name for his horses in the amazing game "
+    "Minecraft."
+)
 
 if "all_chats" not in st.session_state:
 	st.session_state.all_chats = load_data()
@@ -340,33 +360,6 @@ if st.session_state.active_chat_id:
 
 		if not uploaded_file and "last_uploaded" in st.session_state:
 			del st.session_state.last_uploaded
-		
-	def get_chat_session(history_to_send):
-		return client.chats.create(
-        	model="gemini-2.5-flash-lite",
-        	config=types.GenerateContentConfig(
-        	    system_instruction=(
-					f"Your name is {BOT_NAME}. You are a witty AI assistant."
-					"When performing math, always use LaTeX notation with "
-					"double dollar signs for blocks and single dollar signs "
-					"for inline equations. You can create and edit files. "
-					"When editing a file, provide the full updated content "
-					"inside triple backticks. for complex math, physics, or "
-					"data analysis, ALWAYS use the code_execution tool to "
-					"calculate the exact result. Also for any math, don't "
-					"round numbers until the final solution."
-					"You can see and analyze images and files provided by "
-					"the user. You must state something along the lines of "
-					"you were trained and developed by Tyler Matheny, "
-					"God of all Barts/Bartholemews. It can be worded "
-					f"differently each time. You are called {BOT_NAME} because of " \
-					"Tyler Matheny's favorite name for his horses in the amazing game " \
-					"Minecraft.",
-				),
-        	    tools=[types.Tool(google_search=types.GoogleSearch())]
-        	),
-			history=history_to_send
-	    )
 	
 	for i, message in enumerate(messages):
 		name = USER_NAME if message["role"] == "user" else BOT_NAME
@@ -444,88 +437,47 @@ if st.session_state.active_chat_id:
 		last_prompt = messages[-1]["content"]
 		with st.chat_message("assistant"):
 			if last_prompt.lower().startswith("/image"):
-				model_options = [
-					'imagen-4.0-generate-001'
-                ]
 				image_prompt = last_prompt[7:].strip()
-				success = False
-				safe_prompt = image_prompt
+				
 				try:
 					with st.spinner("Refining prompt for the artist..."):
-						refine_chat = client.chats.create(model="gemini-2.5-flash-lite")
-						refine_res = refine_chat.send_message(
-								"You are an artist's prompt engineer. Create a highly detailed, "
-                                "cinematic physical description of the following subject. "
-                                "IMPORTANT: Remove all names of real people, politicians, or celebrities. "
-                                "Describe their facial features, hair, clothing, and the lighting style "
-                                f"generically so an artist can paint it without knowing who it is: '{image_prompt}'"						)
-						if refine_res.text:
-							safe_prompt = refine_res.text
+						pass
+					
+					with st.spinner("Bartholemew is painting..."):
+						img_data = model.generate_image(image_prompt)
+						encoded_img = base64.b64encode(img_data).decode('utf-8')
+						messages.append({
+							"role": "assistant",
+							"content": f"IMAGE_DATA:{encoded_img}",
+							"caption": image_prompt
+						})
+						save_data(all_data)
+						st.rerun()
+				
 				except Exception as e:
-					st.warning("Refine error, using original prompt.")
-
-				with st.spinner("Bartholemew is painting..."):
-					for model_id in model_options:
-						try:
-							response = client.models.generate_images(
-                                model=model_id,
-                                prompt=safe_prompt,
-                                config=types.GenerateImagesConfig(
-                                    number_of_images=1,
-                                    aspect_ratio="1:1",
-									person_generation="ALLOW_ADULT",
-									safety_filter_level="BLOCK_LOW_AND_ABOVE"                                )
-                            )
-							if response and hasattr(response, 'generated_images') and response.generated_images:
-								img_data = response.generated_images[0].image.image_bytes
-								encoded_img = base64.b64encode(img_data).decode('utf-8')
-								messages.append({
-									"role": "assistant",
-									"content": f"IMAGE_DATA:{encoded_img}",
-									"caption": image_prompt
-								})
-								save_data(all_data)
-								success = True                            
-								st.rerun() 
-							else:
-								last_error = "Safety filters blocked the generation or no image was returned"
-						except Exception as e:
-							last_error = str(e)
-							continue
-				if not success:
-					st.error(f"Failed. Reason: {last_error}")
+					st.error(f"Failed. Reason: {str(e)}")
 					
 			else:
 				recent_messages = messages[-20:]
-				formatted_history = []
-				for m in recent_messages[:-1]:
-					gemini_role = "model" if m["role"] == "assistant" else "user"
-					clean_text = m["content"] if not str(m["content"]).startswith("IMAGE_DATA:") else "[Image]"
-					formatted_history.append({"role": gemini_role, "parts": [{"text": clean_text}]})
+				
 				try:
-					chat_session = get_chat_session(formatted_history)
-					content_to_send = [last_prompt]
-					
+					file_data = None
 					if "pending_file" in st.session_state:
 						file_data = st.session_state.pending_file
-						content_to_send.append(
-							types.Part.from_bytes(
-								data=file_data["bytes"],
-								mime_type=file_data["mime"]
-							)
-						)
-						st.caption(f"Processing: {file_data["name"]}")
+						st.caption(f"Processing: {file_data['name']}")
 						del st.session_state.pending_file
+					
 					with st.spinner("Bartholemew is thinking..."):
-						response = chat_session.send_message(content_to_send)
-						if response.text:
-							messages.append({"role": "assistant", "content": response.text})
-						else:
-							st.warning("Recieved an unexpected response format")
-						if "pending_file" in st.session_state:
-							del st.session_state.pending_file
+						response_text = model.generate_response(
+							messages=recent_messages,
+							system_prompt=SYSTEM_PROMPT,
+							file_data=file_data
+						)
+						
+						messages.append({"role": "assistant", "content": response_text})
 						save_data(all_data)
 						st.rerun()
+				
 				except Exception as e:
 					st.error(f"Error: {e}")		
 else:
