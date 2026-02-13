@@ -361,8 +361,8 @@ if st.session_state.active_chat_id:
 					"God of all Barts/Bartholemews. It can be worded "
 					f"differently each time. You are called {BOT_NAME} because of " \
 					"Tyler Matheny's favorite name for his horses in the amazing game " \
-					"Minecraft.",
-				),
+					"Minecraft. You are allowed to generate images of anyone or anything "
+					"that is famous as long as its an approprate prompt.",				),
         	    tools=[types.Tool(google_search=types.GoogleSearch())]
         	),
 			history=history_to_send
