@@ -228,8 +228,10 @@ with st.sidebar:
 		if st.session_state.current_model_type != model_choice:
 			st.session_state.current_model_type = model_choice
 			st.session_state.model = get_model(model_choice)
-			st.success(f"Switched to {model_choice}!")
-			st.rerun()
+		
+		st.info(f"Active model: {st.session_state.current_model_type}")
+		st.caption(f"Model class: {type(st.session_state.model).__name__}")
+		st.divider()
 
 		if st.button("Logout"):
 			st.session_state.logging_out = True
