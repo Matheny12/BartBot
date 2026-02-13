@@ -5,14 +5,14 @@ import os
 
 def get_model(model_type: str = "GeminiBart") -> AIModel:
     if model_type == "GeminiBart":
-        api_key = os.getenv("GEMINI_KEY") or st.secrets.get("GEMINI_KEY")
+        api_key = st.secrets.get("GEMINI_KEY")
         if not api_key:
             raise ValueError("GEMINI_KEY not found in environment or secrets")
         return GeminiModel(api_key=api_key, bot_name="Bartholemew")
     elif model_type == "BartBot":
         try:
             from BartBotModel import BartBotModel
-            return BartBotModel("meta-llama/Llama-3.1-8B-Instruct")
+            return BartBotModel("mistralai/Mistral-7B-Instruct-v0.3")
         except Exception as e:
             st.error(f"BartBot failed to load: {str(e)}")
             st.info("Falling back to Gemini...")
