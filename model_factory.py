@@ -8,6 +8,15 @@ def get_model(model_type: str = "gemini") -> AIModel:
         api_key = st.secrets.get("GEMINI_KEY")
         return GeminiModel(api_key=api_key, bot_name="Bartholemew")
     elif model_type == "BartBot":
-        return BartBotModel("meta-llama/Llama-3.1-8B-Instruct")
+        try:
+            from BartBotModel import BartBotModel
+            return BartBotModel("meta-llama/Llama-3.1-8B-Instruct")
+        except Exception as e:
+            st.error(f"Failed to load BartBot: {str(e)}")
+            st.info("Going back to GeminiBart")
+            api_key = st.secrets.get("GEMINI_KEY")
+            return GeminiModel(api_key=api_key, bot_name="Bartholemew")
+
     else:
-        raise ValueError(f"Unknown model type: {model_type}")
+        api_key = st.secrets.get("GEMINI_KEY")
+        return GeminiModel(api_key=api_key, bot_name="Bartholemew")
