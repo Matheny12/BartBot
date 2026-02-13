@@ -178,7 +178,7 @@ if st.session_state.username and st.session_state.username not in all_data:
     st.rerun()
 
 if "model" not in st.session_state:
-    st.session_state.model = get_model("gemini")
+    st.session_state.model = get_model("GeminiBart")
 
 model = st.session_state.model
 
