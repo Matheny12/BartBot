@@ -214,6 +214,23 @@ def count_tokens(text_list):
 with st.sidebar:
 	if st.session_state.username:
 		st.write(f"Logged in as: **{st.session_state.username.capitalize()}**")
+		
+		st.divider()
+		model_choice = st.selectbox(
+			"AI Model",
+			["GeminiBart", "BartBot"],
+			format_func=lambda x: "Gemini (Cloud)" if x == "GeminiBart" else "BartBot (Local)"
+		)
+
+		if "current_model_type" not in st.session_state:
+			st.session_state.current_model_type = "GeminiBart"
+
+		if st.session_state.current_model_type != model_choice:
+			st.session_state.current_model_type = model_choice
+			st.session_state.model = get_model(model_choice)
+			st.success(f"Switched to {model_choice}!")
+			st.rerun()
+
 		if st.button("Logout"):
 			st.session_state.logging_out = True
 			if all_cookies and "bartbot_user" in all_cookies:
@@ -227,6 +244,23 @@ with st.sidebar:
 	elif st.session_state.visitor_id:
 		st.write(f"Visitor Mode: **{st.session_state.visitor_id}**")
 		st.warning("Your chats will not be saved.")
+
+		st.divider()
+		model_choice = st.selectbox(
+			"AI Model",
+			["GeminiBart", "BartBot"],
+			format_func=lambda x: "Gemini (Cloud)" if x == "GeminiBart" else "BartBot (Local)"
+		)
+
+		if "current_model_type" not in st.session_state:
+			st.session_state.current_model_type = "GeminiBart"
+
+		if st.session_state.current_model_type != model_choice:
+			st.session_state.current_model_type = model_choice
+			st.session_state.model = get_model(model_choice)
+			st.success(f"Switched to {model_choice}!")
+			st.rerun()
+
 		if st.button("End Visitor Session"):
 			keys_to_clear = ["visitor_id", "active_chat_id", "visitor_chats"]
 			for key in keys_to_clear:
