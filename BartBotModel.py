@@ -69,13 +69,13 @@ class BartBotModel(AIModel):
     
     def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
         import time
-        import base64
         import io
+        import tempfile
+        import os
         import requests
         from PIL import Image as PILImage
         from google import genai
         from google.genai import types
-        import os
         
         if not image_data:
             raise NotImplementedError(
@@ -88,52 +88,51 @@ class BartBotModel(AIModel):
         
         try:
             client = genai.Client(api_key=gemini_key)
-            
             image = PILImage.open(io.BytesIO(image_data))
-            image_format = image.format.lower() if image.format else 'jpeg'
-            mime_type = f"image/{image_format}"
             
-            encoded_image = base64.b64encode(image_data).decode('utf-8')
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_file:
+                image.save(tmp_file.name, format='PNG')
+                tmp_path = tmp_file.name
             
-            image_dict = {
-                "bytesBase64Encoded": encoded_image,
-                "mimeType": mime_type
-            }
-            
-            operation = client.models.generate_videos(
-                model="veo-3.1-fast-generate-preview",
-                prompt=prompt if prompt else "animate this image naturally with smooth motion",
-                image=image_dict,
-                config=types.GenerateVideosConfig(
-                    aspect_ratio="16:9",
-                    duration_seconds=8,
-                    resolution="720p"
-                )
-            )
-            
-            max_wait = 180
-            elapsed = 0
-            while not operation.done and elapsed < max_wait:
-                time.sleep(5)
-                elapsed += 5
-                operation = client.operations.get(operation)
-            
-            if not operation.done:
-                raise Exception("Video generation timed out after 3 minutes")
-            
-            if operation.result and operation.result.generated_videos:
-                video_uri = operation.result.generated_videos[0].video.uri
+            try:
+                uploaded_image = genai.upload_file(path=tmp_path)
                 
-                if video_uri.startswith("gs://"):
-                    raise Exception(
-                        "Video stored in Google Cloud Storage. "
-                        "Please set up a GCS bucket and configure output_gcs_uri in the config."
+                operation = client.models.generate_videos(
+                    model="veo-3.1-fast-generate-preview",
+                    prompt=prompt if prompt else "animate this image naturally with smooth motion",
+                    image=uploaded_image,
+                    config=types.GenerateVideosConfig(
+                        aspect_ratio="16:9",
+                        duration_seconds=8,
+                        resolution="720p"
                     )
+                )
                 
-                video_response = requests.get(video_uri)
-                return video_response.content
-            
-            raise Exception("No video generated")
+                max_wait = 180
+                elapsed = 0
+                while not operation.done and elapsed < max_wait:
+                    time.sleep(5)
+                    elapsed += 5
+                    operation = client.operations.get(operation)
+                
+                if not operation.done:
+                    raise Exception("Video generation timed out after 3 minutes")
+                
+                if operation.result and operation.result.generated_videos:
+                    video_uri = operation.result.generated_videos[0].video.uri
+                    
+                    if video_uri.startswith("gs://"):
+                        raise Exception(
+                            "Video stored in Google Cloud Storage. "
+                            "Please set up a GCS bucket and configure output_gcs_uri in the config."
+                        )
+                    
+                    video_response = requests.get(video_uri)
+                    return video_response.content
+                
+                raise Exception("No video generated")
+            finally:
+                os.unlink(tmp_path)
             
         except Exception as e:
             raise Exception(f"Failed to generate video: {str(e)}")
