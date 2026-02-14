@@ -487,7 +487,7 @@ if st.session_state.active_chat_id:
                         st.error("No image found! Please upload, paste, or generate an image first, then use /video to animate it.")
                         st.info("Example: Upload a photo, then type `/video make it move`")
                     else:
-                        spinner_msg = "🎬 Bartholemew is animating your image into a video..."
+                        spinner_msg = "Bartholemew is animating your image into a video..."
                         with st.spinner(spinner_msg):
                             video_data = model.generate_video(video_prompt, image_data=image_bytes)
                             st.video(video_data)
