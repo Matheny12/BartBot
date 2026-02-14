@@ -3,6 +3,10 @@ extra-streamlit-components
 google-genai
 streamlit-paste-button
 gpt4all
-requests
+torch --index-url https://download.pytorch.org/whl/cpu
+transformers
+diffusers
+accelerate
 pillow
+sentencepiece
 huggingface_hub
