@@ -95,8 +95,7 @@ class BartBotModel(AIModel):
                 tmp_path = tmp_file.name
             
             try:
-                image_obj = types.Image.from_file(tmp_path)
-                
+                image_obj = types.Image.from_file(path=tmp_path)                
                 operation = client.models.generate_videos(
                     model="veo-3.1-fast-generate-preview",
                     prompt=prompt if prompt else "animate this image naturally with smooth motion",
