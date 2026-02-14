@@ -10,3 +10,4 @@ pillow
 sentencepiece
 protobuf
 bitsandbytes
+llama-cpp-python
