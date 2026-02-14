@@ -6,7 +6,6 @@ import os
 import streamlit as st
 import requests
 import time
-import imghdr
 from PIL import Image as PILImage
 
 class BartBotModel(AIModel):
@@ -51,24 +50,21 @@ class BartBotModel(AIModel):
             raise ValueError("Please upload an image first.")
 
         try:
-            img_format = imghdr.what(None, h=image_data)
-            if img_format == 'jpeg':
-                mime_type = "image/jpeg"
-            elif img_format == 'png':
+            try:
+                img = PILImage.open(io.BytesIO(image_data))
+                img_format = img.format.lower() if img.format else 'png'
+                
+                mime_type_map = {
+                    'jpeg': 'image/jpeg',
+                    'jpg': 'image/jpeg',
+                    'png': 'image/png',
+                    'gif': 'image/gif',
+                    'webp': 'image/webp'
+                }
+                mime_type = mime_type_map.get(img_format, 'image/png')
+                
+            except Exception:
                 mime_type = "image/png"
-            elif img_format == 'gif':
-                mime_type = "image/gif"
-            elif img_format == 'webp':
-                mime_type = "image/webp"
-            else:
-                try:
-                    img = PILImage.open(io.BytesIO(image_data))
-                    buffered = io.BytesIO()
-                    img.save(buffered, format="PNG")
-                    image_data = buffered.getvalue()
-                    mime_type = "image/png"
-                except:
-                    mime_type = "image/png"
             
             operation = self.client.models.generate_videos(
                 model="veo-3.1-fast-generate-preview",
