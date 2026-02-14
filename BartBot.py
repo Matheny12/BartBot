@@ -377,9 +377,9 @@ if st.session_state.active_chat_id:
                                 key=f"dl_{i}_{idx}_{current_id}"
                             )
 
-    col1, col2 = st.columns([0.85, 0.15])
+    col1, col2 = st.columns([1, 0.15])
     with col1:
-        prompt = st.chat_input("What can I help you with? For image generation, start prompt with '/image'")
+        prompt = st.chat_input("What can I help you with? For image generation, start prompt with '/image' and for videos '/video'")
     with col2:
         pasted_output = paste_image_button(
             label="Paste Image", 
@@ -436,6 +436,24 @@ if st.session_state.active_chat_id:
                         st.rerun()
             except Exception as e:
                 st.error(f"Failed to generate image. Reason: {str(e)}")                    
+        elif last_prompt.lower().startswith("/video"):
+            video_prompt = last_prompt[7:].strip()
+            try:
+                with st.chat_message("assistant"):
+                    spinner_msg = "Bartholemew is creating a video locally..." if type(model).__name__ == "BartBotModel" else "Bartholemew is creating a video..."
+                    with st.spinner(spinner_msg):
+                        video_data = model.generate_video(video_prompt)
+                        st.video(video_data)
+                        encoded_video = base64.b64encode(video_data).decode('utf-8')
+                        messages.append({
+                            "role": "assistant",
+                            "content": f"VIDEO_DATA:{encoded_video}",
+                            "caption": video_prompt
+                        })
+                        save_data(all_data)
+                        st.rerun()
+            except Exception as e:
+                st.error(f"Failed to generate video. Reason: {str(e)}")                    
         else:
             recent_messages = messages[-20:]
             full_response = "" 
