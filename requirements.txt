@@ -1,8 +1,8 @@
 streamlit
-llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 extra-streamlit-components
 google-genai
 streamlit-paste-button
+gpt4all
 torch --index-url https://download.pytorch.org/whl/cpu
 transformers
 diffusers

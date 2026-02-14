@@ -1,6 +1,6 @@
 from ai_models import AIModel
 from typing import List, Dict, Optional, Generator
-from llama_cpp import Llama
+from gpt4all import GPT4All
 from diffusers import StableDiffusionPipeline
 import io
 import os
@@ -10,37 +10,24 @@ from huggingface_hub import hf_hub_download
 class BartBotModel(AIModel):
     @st.cache_resource
     def _get_llm(_self):
-        model_path = hf_hub_download(
-            repo_id="hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF",
-            filename="llama-3.2-1b-instruct-q4_k_m.gguf"
-        )
-        return Llama(
-            model_path=model_path,
-            n_ctx=2048,
-            n_threads=2
-        )
-
+        model_name = "llama-3.2-1b-instruct-q4_k_m.gguf"
+        return GPT4ALL(model_name=model_name, allow_download=True)
+    
     def __init__(self):
         self.llm = self._get_llm()
         self.image_model = None
 
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:
-        prompt = f"System: {system_prompt}\n"
-        for msg in messages:
-            role = "User" if msg["role"] == "user" else "Assistant"
-            prompt += f"{role}: {msg['content']}\n"
-        prompt += "Assistant: "
-
-        stream = self.llm(
-            prompt,
-            max_tokens=1024,
-            stop=["User:", "\n"],
-            stream=True
-        )
-        
-        for output in stream:
-            yield output['choices'][0]['text']
-
+        with self.llm.chat_session(system_prompt):
+            user_input = messages[-1]["content"]   
+            response_generator = self.llm.generate(
+                user_input, 
+                max_tokens=1024, 
+                streaming=True
+            )
+            for token in response_generator:
+                yield token
+                
     def generate_image(self, prompt: str) -> bytes:
         if self.image_model is None:
             self.image_model = StableDiffusionPipeline.from_pretrained(
