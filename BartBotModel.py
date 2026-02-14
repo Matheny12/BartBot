@@ -9,7 +9,7 @@ import streamlit as st
 class BartBotModel(AIModel):
     @st.cache_resource
     def _get_llm(_self):
-        model_name = "llama-3.2-1b-instruct-q4_k_m.gguf"
+        model_name = "Llama-3.2-1B-Instruct-Q4_0.gguf"
         return GPT4All(model_name=model_name, allow_download=True)
     
     def __init__(self):
