@@ -361,6 +361,17 @@ if st.session_state.active_chat_id:
                     mime="image/png",
                     key=f"download_btn_{current_id}_{i}"
                 )
+            elif isinstance(content, str) and content.startswith("VIDEO_DATA:"):
+                base64_str = content.replace("VIDEO_DATA:", "")
+                video_bytes = base64.b64decode(base64_str)
+                st.video(video_bytes)
+                st.download_button(
+                    label="Download Video",
+                    data=video_bytes,
+                    file_name=f"bartbot_{i}.mp4",
+                    mime="video/mp4",
+                    key=f"download_video_btn_{current_id}_{i}"
+                )
             else:
                 if isinstance(content, str):
                     content = content.replace(r"\[", "$$").replace(r"\]", "$$")
@@ -377,9 +388,9 @@ if st.session_state.active_chat_id:
                                 key=f"dl_{i}_{idx}_{current_id}"
                             )
 
-    col1, col2 = st.columns([1, 0.15])
+    col1, col2 = st.columns([0.85, 0.15])
     with col1:
-        prompt = st.chat_input("What can I help you with? For image generation, start prompt with '/image' and for videos '/video'")
+        prompt = st.chat_input("What can I help you with? Use '/image [prompt]' for images. Upload/paste an image, then use '/video [description]' to animate it.")
     with col2:
         pasted_output = paste_image_button(
             label="Paste Image", 
@@ -435,30 +446,35 @@ if st.session_state.active_chat_id:
                         save_data(all_data)
                         st.rerun()
             except Exception as e:
-                st.error(f"Failed to generate image. Reason: {str(e)}")                    
+                st.error(f"Failed to generate image. Reason: {str(e)}")
         elif last_prompt.lower().startswith("/video"):
             video_prompt = last_prompt[7:].strip()
             image_bytes = None
-            for msg in reversed(messages[:-1]):
-                if isinstance(msg.get("content"), str) and msg["content"].startswith("IMAGE_DATA:"):
-                    base64_str = msg["content"].replace("IMAGE_DATA:", "")
-                    image_bytes = base64.b64decode(base64_str)
-                    break
+            for msg in reversed(messages):
+                content = msg.get("content", "")
+                if isinstance(content, str) and content.startswith("IMAGE_DATA:"):
+                    base64_str = content.replace("IMAGE_DATA:", "")
+                    try:
+                        image_bytes = base64.b64decode(base64_str)
+                        break
+                    except Exception:
+                        continue
             try:
                 with st.chat_message("assistant"):
                     if not image_bytes:
-                        st.error("Please upload or paste an image first before using /video. The image will be animated into a video.")
+                        st.error("❌ No image found! Please upload, paste, or generate an image first, then use /video to animate it.")
+                        st.info("💡 Example: Upload a photo, then type `/video make it move`")
                     else:
-                        spinner_msg = "Bartholemew is creating a video locally..." if type(model).__name__ == "BartBotModel" else "Bartholemew is creating a video..."
+                        spinner_msg = "🎬 Bartholemew is animating your image into a video..."
                         with st.spinner(spinner_msg):
-                            video_data = model.generate_video(video_prompt)
+                            video_data = model.generate_video(video_prompt, image_data=image_bytes)
                             st.video(video_data)
                             encoded_video = base64.b64encode(video_data).decode('utf-8')
                             messages.append({
-								"role": "assistant",
-								"content": f"VIDEO_DATA:{encoded_video}",
-								"caption": video_prompt
-							})
+                                "role": "assistant",
+                                "content": f"VIDEO_DATA:{encoded_video}",
+                                "caption": video_prompt if video_prompt else "Animated image"
+                            })
                             save_data(all_data)
                             st.rerun()
             except Exception as e:
