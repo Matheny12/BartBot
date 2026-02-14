@@ -54,6 +54,8 @@ class BartBotModel(AIModel):
                 img = PILImage.open(io.BytesIO(image_data))
                 img_format = img.format.lower() if img.format else 'png'
                 
+                print(f"[DEBUG] Image format detected: {img_format}, Size: {img.size}")
+                
                 mime_type_map = {
                     'jpeg': 'image/jpeg',
                     'jpg': 'image/jpeg',
@@ -63,24 +65,70 @@ class BartBotModel(AIModel):
                 }
                 mime_type = mime_type_map.get(img_format, 'image/png')
                 
-            except Exception:
+                if img.mode not in ('RGB', 'RGBA'):
+                    print(f"[DEBUG] Converting image from {img.mode} to RGB")
+                    img = img.convert('RGB')
+                    buffered = io.BytesIO()
+                    img.save(buffered, format='JPEG')
+                    image_data = buffered.getvalue()
+                    mime_type = 'image/jpeg'
+                
+                print(f"[DEBUG] Final MIME type: {mime_type}, Data size: {len(image_data)} bytes")
+                
+            except Exception as e:
+                print(f"[ERROR] Image processing failed: {str(e)}")
                 mime_type = "image/png"
             
+            print(f"[DEBUG] Starting video generation with prompt: '{prompt}'")
             operation = self.client.models.generate_videos(
                 model="veo-3.1-fast-generate-preview",
-                prompt=prompt or "animate this",
+                prompt=prompt or "animate this image naturally with subtle movement",
                 image=types.Image(image_bytes=image_data, mime_type=mime_type),
-                config=types.GenerateVideosConfig(resolution="720p")
+                config=types.GenerateVideosConfig(
+                    resolution="720p",
+                    duration_seconds=8
+                )
             )
 
+            print(f"[DEBUG] Operation started: {operation.name}")
+            
+            max_wait_time = 300
+            start_time = time.time()
+            poll_count = 0
+            
             while not operation.done:
+                if time.time() - start_time > max_wait_time:
+                    raise Exception(f"Video generation timed out after {max_wait_time} seconds")
+                
                 time.sleep(5)
                 operation = self.client.operations.get(operation)
+                poll_count += 1
+                elapsed = int(time.time() - start_time)
+                print(f"[DEBUG] Poll #{poll_count}, Elapsed: {elapsed}s, Done: {operation.done}")
             
-            if operation.result and operation.result.generated_videos:
-                uri = operation.result.generated_videos[0].video.uri
-                return requests.get(uri).content
+            print(f"[DEBUG] Operation completed after {poll_count} polls")
             
-            raise Exception("No video was generated.")
+            if not operation.result:
+                raise Exception("Operation completed but no result was returned")
+            
+            if not operation.result.generated_videos:
+                raise Exception("Operation completed but no videos were generated")
+            
+            uri = operation.result.generated_videos[0].video.uri
+            print(f"[DEBUG] Video URI: {uri}")
+            
+            video_response = requests.get(uri, timeout=60)
+            video_response.raise_for_status()
+            video_data = video_response.content
+            
+            print(f"[DEBUG] Video downloaded: {len(video_data)} bytes")
+            
+            if len(video_data) < 1000:
+                raise Exception(f"Video file is too small ({len(video_data)} bytes), likely corrupted")
+            
+            return video_data
+            
         except Exception as e:
-            raise Exception(f"Video generation failed: {e}")
+            error_msg = f"Video generation failed: {e}"
+            print(f"[ERROR] {error_msg}")
+            raise Exception(error_msg)
