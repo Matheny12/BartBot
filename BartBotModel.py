@@ -17,6 +17,12 @@ class BartBotModel(AIModel):
             token=hf_token,
             trust_remote_code=True
         )
+        quant_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True
+        )
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             torch_dtype=torch.float16,
@@ -41,7 +47,7 @@ class BartBotModel(AIModel):
         generation_kwargs = dict(
             **inputs,
             streamer=streamer,
-            max_new_tokens=2048,
+            max_new_tokens=1024,
             temperature=0.7,
             top_p=0.9,
             do_sample=True,
@@ -77,7 +83,7 @@ class BartBotModel(AIModel):
         
         image = self.image_model(
             prompt,
-            num_inference_steps=50,
+            num_inference_steps=25,
             guidance_scale=7.5
         ).images[0]
 
