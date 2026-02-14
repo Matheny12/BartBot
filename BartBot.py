@@ -484,8 +484,8 @@ if st.session_state.active_chat_id:
             try:
                 with st.chat_message("assistant"):
                     if not image_bytes:
-                        st.error("❌ No image found! Please upload, paste, or generate an image first, then use /video to animate it.")
-                        st.info("💡 Example: Upload a photo, then type `/video make it move`")
+                        st.error("No image found! Please upload, paste, or generate an image first, then use /video to animate it.")
+                        st.info("Example: Upload a photo, then type `/video make it move`")
                     else:
                         spinner_msg = "🎬 Bartholemew is animating your image into a video..."
                         with st.spinner(spinner_msg):
