@@ -438,20 +438,29 @@ if st.session_state.active_chat_id:
                 st.error(f"Failed to generate image. Reason: {str(e)}")                    
         elif last_prompt.lower().startswith("/video"):
             video_prompt = last_prompt[7:].strip()
+            image_bytes = None
+            for msg in reversed(messages[:-1]):
+                if isinstance(msg.get("content"), str) and msg["content"].startswith("IMAGE_DATA:"):
+                    base64_str = msg["content"].replace("IMAGE_DATA:", "")
+                    image_bytes = base64.b64decode(base64_str)
+                    break
             try:
                 with st.chat_message("assistant"):
-                    spinner_msg = "Bartholemew is creating a video locally..." if type(model).__name__ == "BartBotModel" else "Bartholemew is creating a video..."
-                    with st.spinner(spinner_msg):
-                        video_data = model.generate_video(video_prompt)
-                        st.video(video_data)
-                        encoded_video = base64.b64encode(video_data).decode('utf-8')
-                        messages.append({
-                            "role": "assistant",
-                            "content": f"VIDEO_DATA:{encoded_video}",
-                            "caption": video_prompt
-                        })
-                        save_data(all_data)
-                        st.rerun()
+                    if not image_bytes:
+                        st.error("Please upload or paste an image first before using /video. The image will be animated into a video.")
+                    else:
+                        spinner_msg = "Bartholemew is creating a video locally..." if type(model).__name__ == "BartBotModel" else "Bartholemew is creating a video..."
+                        with st.spinner(spinner_msg):
+                            video_data = model.generate_video(video_prompt)
+                            st.video(video_data)
+                            encoded_video = base64.b64encode(video_data).decode('utf-8')
+                            messages.append({
+								"role": "assistant",
+								"content": f"VIDEO_DATA:{encoded_video}",
+								"caption": video_prompt
+							})
+                            save_data(all_data)
+                            st.rerun()
             except Exception as e:
                 st.error(f"Failed to generate video. Reason: {str(e)}")                    
         else:
