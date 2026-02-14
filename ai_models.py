@@ -11,5 +11,5 @@ class AIModel(ABC):
         pass
     
     @abstractmethod
-    def generate_video(self, prompt: str) -> bytes:
+    def generate_video(self, prompt: str, image_data: Optional[bytes] = None) -> bytes:
         pass

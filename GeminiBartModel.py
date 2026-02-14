@@ -88,37 +88,78 @@ class GeminiModel(AIModel):
         return prompt
     
     def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
-        """
-        Generate video from an image using LTX-Video model.
-        If no image is provided, raises an error.
-        """
         import os
-        from huggingface_hub import InferenceClient
-        from PIL import Image
-        import io
-
+        import requests
+        import base64
+        import time
+        
         if not image_data:
             raise NotImplementedError(
                 "Text-to-video is not supported. Please upload an image first, then use /video to animate it."
             )
-
-        hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_HUB_TOKEN")
-        if not hf_token:
-            raise Exception("HF_TOKEN not found. Please add your Hugging Face token to Streamlit secrets or environment variables for video generation.")
+        
+        modelslab_key = os.getenv("MODELSLAB_API_KEY") or st.secrets.get("MODELSLAB_API_KEY")
+        if not modelslab_key:
+            raise Exception(
+                "MODELSLAB_API_KEY not found. Please add your ModelsLab API key to Streamlit secrets. "
+                "Get your free API key at https://modelslab.com/developers"
+            )
         
         try:
-            image = Image.open(io.BytesIO(image_data))
-            client = InferenceClient(api_key=hf_token)
-            video_bytes = client.image_to_video(
-                image=image,
-                model="Lightricks/LTX-Video-0.9.8-13B-distilled",
-                prompt=prompt if prompt else "animate this image naturally",
-                num_frames=81,
-                num_inference_steps=30,
-                guidance_scale=3.0
+            encoded_image = base64.b64encode(image_data).decode('utf-8')
+            
+            payload = {
+                "key": modelslab_key,
+                "model_id": "svd",
+                "init_image": f"data:image/png;base64,{encoded_image}",
+                "height": 512,
+                "width": 512,
+                "num_frames": 25,
+                "num_inference_steps": 20,
+                "min_guidance_scale": 1,
+                "max_guidance_scale": 3,
+                "motion_bucket_id": 20,
+                "noise_aug_strength": 0.02,
+                "strength": 0.7,
+                "base64": False,
+                "webhook": None,
+                "track_id": None
+            }
+            
+            response = requests.post(
+                "https://modelslab.com/api/v1/enterprise/video/img2video",
+                json=payload,
+                timeout=120
             )
-
-            return video_bytes
+            
+            if response.status_code != 200:
+                raise Exception(f"ModelsLab API error: {response.status_code} - {response.text}")
+            
+            result = response.json()
+            
+            if result.get("status") == "processing":
+                fetch_url = result.get("fetch_result")
+                if fetch_url:
+                    for attempt in range(30):
+                        time.sleep(3)
+                        fetch_response = requests.get(fetch_url)
+                        fetch_data = fetch_response.json()
+                        
+                        if fetch_data.get("status") == "success":
+                            video_url = fetch_data.get("output", [None])[0]
+                            if video_url:
+                                video_response = requests.get(video_url)
+                                return video_response.content
+                        elif fetch_data.get("status") == "failed":
+                            raise Exception(f"Video generation failed: {fetch_data.get('message', 'Unknown error')}")
+            
+            elif result.get("status") == "success":
+                video_url = result.get("output", [None])[0]
+                if video_url:
+                    video_response = requests.get(video_url)
+                    return video_response.content
+            
+            raise Exception(f"Unexpected response: {result}")
             
         except Exception as e:
             raise Exception(f"Failed to generate video: {str(e)}")
