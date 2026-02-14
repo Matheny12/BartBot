@@ -6,6 +6,9 @@ import streamlit as st
 import time
 import requests
 import os
+import imghdr
+from io import BytesIO
+from PIL import Image as PILImage
 
 class GeminiModel(AIModel):
     def __init__(self, api_key: str, bot_name: str = "Bartholemew"):
@@ -55,10 +58,29 @@ class GeminiModel(AIModel):
             raise ValueError("Please upload an image first to animate it.")
 
         try:
+            img_format = imghdr.what(None, h=image_data)
+            if img_format == 'jpeg':
+                mime_type = "image/jpeg"
+            elif img_format == 'png':
+                mime_type = "image/png"
+            elif img_format == 'gif':
+                mime_type = "image/gif"
+            elif img_format == 'webp':
+                mime_type = "image/webp"
+            else:
+                try:
+                    img = PILImage.open(BytesIO(image_data))
+                    buffered = BytesIO()
+                    img.save(buffered, format="PNG")
+                    image_data = buffered.getvalue()
+                    mime_type = "image/png"
+                except:
+                    mime_type = "image/png"
+            
             operation = self.client.models.generate_videos(
                 model="veo-3.1-fast-generate-preview",
                 prompt=prompt if prompt else "animate this image naturally",
-                image=types.Image(image_bytes=image_data, mime_type="image/png"),
+                image=types.Image(image_bytes=image_data, mime_type=mime_type),
                 config=types.GenerateVideosConfig(
                     aspect_ratio="16:9",
                     duration_seconds=8,
