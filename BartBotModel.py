@@ -31,27 +31,44 @@ class BartBotModel(AIModel):
         import os
         from huggingface_hub import InferenceClient
         import io
+        import time
 
         hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_HUB_TOKEN")
         if not hf_token:
             raise Exception("HF_TOKEN not found. Please add your Hugging Face token to Streamlit secrets or environment variables for image generation.")
 
-        try:
-            client = InferenceClient(api_key=hf_token)
-            image = client.text_to_image(
-                prompt,
-                model="ByteDance/SDXL-Lightning",
-                num_inference_steps=4,
-                guidance_scale=7.5,
-                width=512,
-                height=512
-            )
-            img_byte_arr = io.BytesIO()
-            image.save(img_byte_arr, format='PNG')
-            return img_byte_arr.getvalue()
-            
-        except Exception as e:
-            raise Exception(f"Failed to generate image: {str(e)}")
+        models_to_try = [
+            ("stabilityai/stable-diffusion-2-1", {"num_inference_steps": 20}),
+            ("black-forest-labs/FLUX.1-schnell", {"num_inference_steps": 4}),
+            ("ByteDance/SDXL-Lightning", {"num_inference_steps": 4}),
+        ]
+
+
+        client = InferenceClient(api_key=hf_token)
+        last_error = None
+
+        for model_name, params in models_to_try:
+            try:
+                image = client.text_to_image(
+                    prompt,
+                    model=model_name,
+                    guidance_scale=7.5,
+                    width=512,
+                    height=512,
+                    timeout=120,
+                    **params
+                )
+                img_byte_arr = io.BytesIO()
+                image.save(img_byte_arr, format='PNG')
+                return img_byte_arr.getvalue()
+            except Exception as e:
+                last_error = str(e)
+                if "timeout" in str(e).lower() or "cold state" in str(e).lower():
+                    continue
+                continue
+        raise Exception(f"Failed to generate image after trying multiple models. Last error: {last_error}")
+
+
 
     def generate_video(self, prompt: str) -> bytes:
         import os
@@ -66,7 +83,7 @@ class BartBotModel(AIModel):
             video_bytes = client.text_to_video(
                 prompt,
                 model="Lightricks/LTX-Video-0.9.8-13B-distilled",
-                num_frames=121,  # ~5 seconds at 25fps
+                num_frames=121,
                 guidance_scale=3.0,
                 num_inference_steps=30
             )
