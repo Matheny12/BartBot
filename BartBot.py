@@ -452,23 +452,23 @@ if st.session_state.active_chat_id:
         last_prompt = messages[-1]["content"]
         if last_prompt.lower().startswith("/image"):
             image_prompt = last_prompt[7:].strip()
-            if type(model).__name__ == "BartBotModel":
-                st.error("Image generation is not available with BartBot. Please switch to Gemini.")
-            else:
-                try:
-                    with st.chat_message("assistant"):
-                        with st.spinner("Bartholemew is painting..."):
-                            img_data = model.generate_image(image_prompt)
-                            encoded_img = base64.b64encode(img_data).decode('utf-8')
-                            messages.append({
-								"role": "assistant",
-								"content": f"IMAGE_DATA:{encoded_img}",
-								"caption": image_prompt
-							})
-                            save_data(all_data)
-                            st.rerun()
-                except Exception as e:
-                            st.error(f"Failed. Reason: {str(e)}")                   
+            try:
+                with st.chat_message("assistant"):
+                    spinner_msg = "Bartholemew is painting locally..." if type(model).__name__ == "BartBotModel" else "Bartholemew is painting..."
+                    
+                    with st.spinner(spinner_msg):
+                        img_data = model.generate_image(image_prompt)
+                        encoded_img = base64.b64encode(img_data).decode('utf-8')
+                        
+                        messages.append({
+                            "role": "assistant",
+                            "content": f"IMAGE_DATA:{encoded_img}",
+                            "caption": image_prompt
+                        })
+                        save_data(all_data)
+                        st.rerun()
+            except Exception as e:
+                st.error(f"Failed. Reason: {str(e)}")                   
         else:
             recent_messages = messages[-20:]
             try:
