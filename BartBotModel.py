@@ -81,7 +81,7 @@ class BartBotModel(AIModel):
             operation = self.client.models.generate_videos(
                 model="veo-3.1-fast-generate-preview",
                 prompt=prompt or "animate this",
-                image=types.Image(data=image_data, mime_type="image/png"),
+                image=types.Image(image_bytes=image_data, mime_type="image/png"),
                 config=types.GenerateVideosConfig(resolution="720p")
             )
 

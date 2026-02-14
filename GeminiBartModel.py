@@ -57,7 +57,7 @@ class GeminiModel(AIModel):
             operation = self.client.models.generate_videos(
                 model="veo-3.1-fast-generate-preview",
                 prompt=prompt if prompt else "animate this image naturally",
-                image=types.Image(data=image_data, mime_type="image/png"),
+                image=types.Image(image_bytes=image_data, mime_type="image/png"),
                 config=types.GenerateVideosConfig(
                     aspect_ratio="16:9",
                     duration_seconds=8,
