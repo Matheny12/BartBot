@@ -14,6 +14,9 @@ class BartBotModel(AIModel):
     def __init__(self):
         self.llm = self._get_llm()
         self.image_model = None
+        gemini_key = os.getenv("GEMINI_KEY") or st.secrets.get("GEMINI_KEY")
+        from google import genai
+        self.client = genai.Client(api_key=gemini_key)
 
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:        
         with self.llm.chat_session(system_prompt):
@@ -67,71 +70,40 @@ class BartBotModel(AIModel):
         
         raise Exception(f"Failed to generate image after trying multiple models. Last error: {last_error}")
     
-    def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
-        import time
-        import io
-        import tempfile
-        import os
-        import requests
-        from PIL import Image as PILImage
+def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
+    import time
+    from google.genai import types
+    
+    if not image_data:
+        raise ValueError("Please upload an image first to animate it.")
+
+    client_to_use = getattr(self, 'client', None)
+    if not client_to_use:
         from google import genai
-        from google.genai import types
-        
-        if not image_data:
-            raise NotImplementedError(
-                "Text-to-video is not supported. Please upload an image first, then use /video to animate it."
+        api_key = os.getenv("GEMINI_KEY") or st.secrets.get("GEMINI_KEY")
+        client_to_use = genai.Client(api_key=api_key)
+
+    try:
+        operation = client_to_use.models.generate_videos(
+            model="veo-3.1-fast-generate-preview",
+            prompt=prompt if prompt else "animate this image naturally",
+            image=types.Image(data=image_data, mime_type="image/png"),
+            config=types.GenerateVideosConfig(
+                aspect_ratio="16:9",
+                duration_seconds=8,
+                resolution="720p"
             )
+        )
+
+        while not operation.done:
+            time.sleep(5)
+            operation = client_to_use.operations.get(operation)
         
-        gemini_key = os.getenv("GEMINI_KEY") or st.secrets.get("GEMINI_KEY")
-        if not gemini_key:
-            raise Exception("GEMINI_KEY not found. Please add your Gemini API key to Streamlit secrets.")
-        
-        try:
-            client = genai.Client(api_key=gemini_key)
-            pil_image = PILImage.open(io.BytesIO(image_data))
+        if operation.result and operation.result.generated_videos:
+            import requests
+            video_uri = operation.result.generated_videos[0].video.uri
+            return requests.get(video_uri).content
             
-            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_file:
-                pil_image.save(tmp_file.name, format='PNG')
-                tmp_path = tmp_file.name
-            
-            try:
-                operation = self.client.models.generate_videos(
-                    model="veo-3.1-fast-generate-preview",
-                    prompt=prompt if prompt else "animate this image naturally with smooth motion",
-                    image=types.Image(data=image_data, mime_type="image/png"), 
-                    config=types.GenerateVideosConfig(
-                        aspect_ratio="16:9",
-                        duration_seconds=8,
-                        resolution="720p"
-                    )
-                )
-                
-                max_wait = 180
-                elapsed = 0
-                while not operation.done and elapsed < max_wait:
-                    time.sleep(5)
-                    elapsed += 5
-                    operation = client.operations.get(operation)
-                
-                if not operation.done:
-                    raise Exception("Video generation timed out after 3 minutes")
-                
-                if operation.result and operation.result.generated_videos:
-                    video_uri = operation.result.generated_videos[0].video.uri
-                    
-                    if video_uri.startswith("gs://"):
-                        raise Exception(
-                            "Video stored in Google Cloud Storage. "
-                            "Please set up a GCS bucket and configure output_gcs_uri in the config."
-                        )
-                    
-                    video_response = requests.get(video_uri)
-                    return video_response.content
-                
-                raise Exception("No video generated")
-            finally:
-                if os.path.exists(tmp_path):
-                    os.unlink(tmp_path)
-            
-        except Exception as e:
-            raise Exception(f"Failed to generate video: {str(e)}")
+        raise Exception("Video generation failed to return a result.")
+    except Exception as e:
+        raise Exception(f"Failed to generate video: {str(e)}")
