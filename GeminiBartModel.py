@@ -2,14 +2,13 @@ from ai_models import AIModel
 from google import genai
 from google.genai import types
 from typing import List, Dict, Optional
-import base64
 
 class GeminiModel(AIModel):
     def __init__(self, api_key: str, bot_name: str = "Bartholemew"):
         self.client = genai.Client(api_key=api_key)
         self.bot_name = bot_name
     
-    def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> str:
+    def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None):
         formatted_history = []
         for m in messages[:-1]:
             gemini_role = "model" if m["role"] == "assistant" else "user"
@@ -35,14 +34,12 @@ class GeminiModel(AIModel):
                     mime_type=file_data["mime"]
                 )
             )
+            
+        response = chat_session.send_message(content_to_send, stream=True)
         
-        response = chat_session.send_message(content_to_send)
-        
-        if response.text:
-            return response.text
-        else:
-            raise ValueError("Received an unexpected response format from Gemini")
-    
+        for chunk in response:
+            if chunk.text:
+                yield chunk.text    
     def generate_image(self, prompt: str) -> bytes:
         safe_prompt = self._refine_prompt(prompt)
         

@@ -477,18 +477,17 @@ if st.session_state.active_chat_id:
                         file_data = st.session_state.pending_file
                         st.caption(f"Processing: {file_data['name']}")
                         del st.session_state.pending_file
-                    
-                    response_text = st.write_stream(
+                    with st.chat_message("assistand"):
                         model.generate_response(
 							messages=recent_messages,
 							system_prompt=SYSTEM_PROMPT,
 							file_data=file_data
 						)
-                    )
-                    messages.append({"role": "assistant", "content": response_text})
+                        full_response = st.write_stream(response_generator)	    
+                    messages.append({"role": "assistant", "content": full_response})
                     save_data(all_data)
-                    st.rerun()
+                    st.rerun()            	
                 except Exception as e:
-                	st.error(f"Error: {e}")     
+                    st.error(f"Error: {e}")     
 else:
     st.info("Click 'Start New Chat' in the sidebar to begin!")
