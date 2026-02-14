@@ -456,18 +456,19 @@ if st.session_state.active_chat_id:
                 st.error("Image generation is not available with BartBot. Please switch to Gemini.")
             else:
                 try:
-                    with st.spinner("Bartholemew is painting..."):
-                        img_data = model.generate_image(image_prompt)
-                        encoded_img = base64.b64encode(img_data).decode('utf-8')
-                        messages.append({
-                            "role": "assistant",
-                            "content": f"IMAGE_DATA:{encoded_img}",
-                            "caption": image_prompt
-                        })
-                        save_data(all_data)
-                        st.rerun()
+                    with st.chat_message("assistant"):
+                        with st.spinner("Bartholemew is painting..."):
+                            img_data = model.generate_image(image_prompt)
+                            encoded_img = base64.b64encode(img_data).decode('utf-8')
+                            messages.append({
+								"role": "assistant",
+								"content": f"IMAGE_DATA:{encoded_img}",
+								"caption": image_prompt
+							})
+                            save_data(all_data)
+                            st.rerun()
                 except Exception as e:
-                    st.error(f"Failed. Reason: {str(e)}")                   
+                            st.error(f"Failed. Reason: {str(e)}")                   
         else:
             recent_messages = messages[-20:]
             try:
