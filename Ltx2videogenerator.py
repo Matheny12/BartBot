@@ -33,24 +33,38 @@ class LTX2VideoGenerator:
     - 4K at 50fps support
     """
     
-    def __init__(self):
-        self.method = self._detect_method()
+    def __init__(self, force_method=None):
+        """
+        Initialize LTX Video Generator
+        
+        Args:
+            force_method: Optional - "direct" or "replicate" to force a specific method
+        """
+        self.method = self._detect_method(force_method)
     
-    def _detect_method(self):
+    def _detect_method(self, force_method=None):
         """Detect which API to use"""
+        
+        if force_method:
+            print(f"[LTX] Forced method: {force_method}")
+            return force_method
         
         force = os.getenv("LTX_METHOD", "").lower()
         if force == "direct":
+            print("[LTX] Using direct method from LTX_METHOD env var")
             return "direct"
         elif force == "replicate":
+            print("[LTX] Using replicate method from LTX_METHOD env var")
             return "replicate"
         
         if STREAMLIT_AVAILABLE:
             try:
                 force_secret = st.secrets.get("LTX_METHOD", "").lower()
                 if force_secret == "direct":
+                    print("[LTX] Using direct method from Streamlit secrets")
                     return "direct"
                 elif force_secret == "replicate":
+                    print("[LTX] Using replicate method from Streamlit secrets")
                     return "replicate"
             except:
                 pass
@@ -72,6 +86,7 @@ class LTX2VideoGenerator:
             print("[LTX] Using Replicate as fallback")
             return "replicate"
         
+        print("[LTX] Defaulting to direct method")
         return "direct"
     
     def generate_video(self, image_data: bytes, prompt: str = None) -> bytes:

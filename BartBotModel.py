@@ -25,7 +25,7 @@ class BartBotModel(AIModel):
         
         from google import genai
         self.client = genai.Client(api_key=self.api_key)
-        self.video_generator = LTX2VideoGenerator()
+        self.video_generator = LTX2VideoGenerator(force_method="direct")
 
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:
         if file_data:
