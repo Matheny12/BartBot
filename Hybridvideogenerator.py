@@ -28,7 +28,7 @@ except ImportError:
 import requests
 
 
-class HybridVideoGenerator:
+class Hybridvideogenerator:
     """
     Smart video generator that uses the best available method:
     1. Local AnimateDiff (if GPU available) - FREE & UNLIMITED
