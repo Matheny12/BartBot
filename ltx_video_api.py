@@ -202,7 +202,7 @@ class LTX2VideoGenerator:
             if img.mode not in ('RGB', 'RGBA'):
                 img = img.convert('RGB')
             
-            max_dimension = 2048
+            max_dimension = 1024
             if max(img.size) > max_dimension:
                 ratio = max_dimension / max(img.size)
                 new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
@@ -210,7 +210,7 @@ class LTX2VideoGenerator:
                 print(f"[LTX Video API] Resized image to {new_size} to reduce payload size")
             
             buffered = BytesIO()
-            img.save(buffered, format="JPEG", quality=85, optimize=True)
+            img.save(buffered, format="JPEG", quality=75, optimize=True)
             img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
             image_uri = f"data:image/jpeg;base64,{img_base64}"
             
