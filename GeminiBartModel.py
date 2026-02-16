@@ -51,8 +51,15 @@ class GeminiModel(AIModel):
                 ))
 
         response = chat_session.send_message(content_to_send)
-        for chunk in response:
-            yield chunk.text
+        
+        if hasattr(response, 'text'):
+            yield response.text
+        elif isinstance(response, tuple):
+            for item in response:
+                if hasattr(item, 'text'):
+                    yield item.text
+        else:
+            yield str(response)
 
     def generate_image(self, prompt: str) -> bytes:
         response = self.client.models.generate_images(
