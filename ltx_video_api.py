@@ -20,7 +20,7 @@ except ImportError:
 
 try:
     import replicate
-    REPLICATE_AVAILABLE = False
+    REPLICATE_AVAILABLE = False  # FORCE DISABLE - always use direct LTX API
 except ImportError:
     REPLICATE_AVAILABLE = False
 
@@ -52,10 +52,12 @@ class LTX2VideoGenerator:
         print(f"[LTX DEBUG] force_method parameter: {force_method}")
         print(f"[LTX DEBUG] REPLICATE_AVAILABLE: {REPLICATE_AVAILABLE}")
         
+        # If explicitly forced in constructor
         if force_method:
             print(f"[LTX] Forced method: {force_method}")
             return force_method
         
+        # Check environment variable first
         force = os.getenv("LTX_METHOD", "").lower()
         if force == "direct":
             print("[LTX] Using direct method from LTX_METHOD env var")
@@ -64,6 +66,7 @@ class LTX2VideoGenerator:
             print("[LTX] Using replicate method from LTX_METHOD env var")
             return "replicate"
         
+        # Check Streamlit secrets
         if STREAMLIT_AVAILABLE:
             try:
                 force_secret = st.secrets.get("LTX_METHOD", "").lower()
@@ -76,6 +79,8 @@ class LTX2VideoGenerator:
             except:
                 pass
         
+        # Auto-detect based on available keys
+        # Prefer direct API if key exists
         ltx_key = None
         if STREAMLIT_AVAILABLE:
             try:
@@ -89,6 +94,7 @@ class LTX2VideoGenerator:
             print("[LTX] Found LTX_API_KEY, using direct API")
             return "direct"
         
+        # Fall back to Replicate if available
         if REPLICATE_AVAILABLE:
             print("[LTX] Using Replicate as fallback")
             return "replicate"
@@ -198,6 +204,7 @@ class LTX2VideoGenerator:
             
             print("[LTX Video API] Processing image...")
             
+            # Process image
             img = PILImage.open(BytesIO(image_data))
             if img.mode not in ('RGB', 'RGBA'):
                 img = img.convert('RGB')
@@ -207,6 +214,7 @@ class LTX2VideoGenerator:
             img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
             image_uri = f"data:image/png;base64,{img_base64}"
             
+            # Official LTX Video API endpoint
             api_url = "https://api.ltx.video/v1/image-to-video"
             headers = {
                 "Authorization": f"Bearer {api_key}",
@@ -224,6 +232,7 @@ class LTX2VideoGenerator:
             print(f"[LTX Video API] Generating video with prompt: '{prompt}'")
             print("[LTX Video API] This may take 1-2 minutes...")
             
+            # The API returns video directly as MP4
             response = requests.post(api_url, headers=headers, json=payload, timeout=180)
             response.raise_for_status()
             
