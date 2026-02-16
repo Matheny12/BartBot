@@ -9,21 +9,14 @@ import os
 from io import BytesIO
 from PIL import Image as PILImage
 import base64
-
-try:
-    from AnimateDiff import AnimateDiffGenerator, SimpleAnimateDiff
-    ANIMATEDIFF_AVAILABLE = True
-except ImportError as e:
-    ANIMATEDIFF_AVAILABLE = False
-    print(f"[WARNING] AnimateDiff not available: {e}")
-    print("[WARNING] Video generation will not work without AnimateDiff or falling back to API")
+from HybridVideoGenerator import HybridVideoGenerator
 
 class GeminiModel(AIModel):
     def __init__(self, api_key: str, bot_name: str = "Bartholemew"):
         self.client = genai.Client(api_key=api_key)
         self.api_key = api_key
         self.bot_name = bot_name
-        self.animatediff = None
+        self.video_generator = HybridVideoGenerator()
     
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None):
         formatted_history = []
@@ -70,46 +63,17 @@ class GeminiModel(AIModel):
         if not image_data:
             raise ValueError("Please upload an image first to animate it.")
 
-        if not ANIMATEDIFF_AVAILABLE:
-            raise Exception(
-                "AnimateDiff is not available. This could be because:\n"
-                "1. AnimateDiff.py file is missing\n"
-                "2. Required dependencies are not installed (torch, diffusers)\n"
-                "3. Running on Streamlit Cloud (doesn't support local GPU models)\n\n"
-                "Solutions:\n"
-                "- For local use: Install dependencies and ensure AnimateDiff.py is present\n"
-                "- For Streamlit Cloud: Use a cloud API service like Replicate instead"
-            )
-
         try:
-            if self.animatediff is None:
-                print("[GeminiModel] Initializing AnimateDiff...")
-                use_simple = os.getenv("USE_SIMPLE_ANIMATEDIFF", "true").lower() == "true"
-                
-                if use_simple:
-                    self.animatediff = SimpleAnimateDiff()
-                    print("[GeminiModel] Using SimpleAnimateDiff (faster)")
-                else:
-                    self.animatediff = AnimateDiffGenerator()
-                    print("[GeminiModel] Using AnimateDiffGenerator (better quality)")
-            
-            print(f"[GeminiModel] Starting local video generation")
+            print(f"[GeminiModel] Starting video generation")
+            print(f"[GeminiModel] Method: {self.video_generator.method}")
             print(f"[GeminiModel] Prompt: '{prompt}'")
             
-            num_frames = int(os.getenv("ANIMATEDIFF_FRAMES", "16"))
-            fps = int(os.getenv("ANIMATEDIFF_FPS", "8"))
-            
-            video_data = self.animatediff.generate_from_image(
-                image_data=image_data,
-                prompt=prompt if prompt else "smooth subtle motion, high quality",
-                num_frames=num_frames,
-                fps=fps
-            )
+            video_data = self.video_generator.generate_video(image_data, prompt)
             
             print(f"[GeminiModel] Video generated: {len(video_data)} bytes")
             
             if len(video_data) < 1000:
-                raise Exception(f"Video file is too small ({len(video_data)} bytes), likely corrupted")
+                raise Exception(f"Video file is too small ({len(video_data)} bytes)")
             
             return video_data
                 

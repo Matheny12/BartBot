@@ -174,7 +174,7 @@ if st.session_state.username and st.session_state.username not in all_data:
     st.rerun()
 
 if "model" not in st.session_state:
-    st.session_state.model = get_model("GeminiBart")
+    st.session_state.model = get_model("BartBot")
 
 model = st.session_state.model
 BOT_NAME = "Bartholemew"
@@ -213,11 +213,11 @@ with st.sidebar:
         st.divider()
         model_choice = st.selectbox(
             "AI Model",
-            ["GeminiBart", "BartBot"],
+            ["BartBot", "GeminiBart"],
             format_func=lambda x: "GeminiBart" if x == "GeminiBart" else "BartBot"
         )
         if "current_model_type" not in st.session_state:
-            st.session_state.current_model_type = "GeminiBart"
+            st.session_state.current_model_type = "BartBot"
         if st.session_state.current_model_type != model_choice:
             st.session_state.current_model_type = model_choice
             st.session_state.model = get_model(model_choice)
@@ -244,7 +244,7 @@ with st.sidebar:
             format_func=lambda x: "GeminiBart" if x == "GeminiBart" else "BartBot"
         )
         if "current_model_type" not in st.session_state:
-            st.session_state.current_model_type = "GeminiBart"
+            st.session_state.current_model_type = "BartBot"
         if st.session_state.current_model_type != model_choice:
             st.session_state.current_model_type = model_choice
             st.session_state.model = get_model(model_choice)
