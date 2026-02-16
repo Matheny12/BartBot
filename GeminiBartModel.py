@@ -56,14 +56,15 @@ class GeminiModel(AIModel):
 
     def generate_image(self, prompt: str) -> bytes:
         response = self.client.models.generate_images(
-            model="imagen-3.0-generate-001",
+            model="imagen-3.0-generate-002",
             prompt=prompt,
-            number_of_images=1,
-            aspect_ratio="1:1",
-            safety_filter_level="block_only_high",
-            person_generation="allow_adult"
+            config=types.GenerateImagesConfig(
+                number_of_images=1,
+                safety_filter_level="block_only_high",
+                person_generation="allow_adult"
+            )
         )
-        return response.generated_images[0].image.data
+        return response.generated_images[0].image.image_bytes
 
     def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
         if not image_data:
