@@ -132,16 +132,28 @@ class HybridVideoGenerator:
     def _generate_replicate(self, image_data: bytes, prompt: str) -> bytes:
         """Generate using Replicate API"""
         try:
+            api_token = None
+            
             if STREAMLIT_AVAILABLE:
-                api_token = st.secrets["REPLICATE_API_TOKEN"] or os.getenv("REPLICATE_API_TOKEN")
-            else:
+                try:
+                    api_token = st.secrets["REPLICATE_API_TOKEN"]
+                except (KeyError, AttributeError):
+                    pass
+            
+            if not api_token:
                 api_token = os.getenv("REPLICATE_API_TOKEN")
             
             if not api_token:
-                raise ValueError("REPLICATE_API_TOKEN not found in secrets or environment")
+                raise ValueError(
+                    "REPLICATE_API_TOKEN not found!\n\n"
+                    "Add it to Streamlit secrets:\n"
+                    "REPLICATE_API_TOKEN = \"r8_your_token_here\"\n\n"
+                    "Get your token at: https://replicate.com/account/api-tokens"
+                )
             
             os.environ["REPLICATE_API_TOKEN"] = api_token
             
+            print(f"[Replicate] Token found: {api_token[:10]}...")
             img = PILImage.open(BytesIO(image_data))
             if img.mode not in ('RGB', 'RGBA'):
                 img = img.convert('RGB')

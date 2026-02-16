@@ -18,7 +18,11 @@ class BartBotModel(AIModel):
     
     def __init__(self):
         self.llm = self._get_llm()
-        self.api_key = st.secrets.get("GEMINI_KEY") or os.getenv("GEMINI_KEY")
+        try:
+            self.api_key = st.secrets["GEMINI_KEY"]
+        except (KeyError, AttributeError):
+            self.api_key = os.getenv("GEMINI_KEY")
+        
         from google import genai
         self.client = genai.Client(api_key=self.api_key)
         self.video_generator = HybridVideoGenerator()
