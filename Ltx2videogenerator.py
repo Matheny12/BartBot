@@ -26,6 +26,8 @@ except ImportError:
 class LTX2VideoGenerator:
     """
     LTX-2 Video Generation with Audio
+    - Official API: https://api.ltx.video (requires API key from console.ltx.video)
+    - Replicate: Fallback option using replicate.com
     - Up to 60 seconds of video
     - Synchronized audio generation
     - 4K at 50fps support
@@ -127,7 +129,7 @@ class LTX2VideoGenerator:
             raise Exception(f"LTX-2 generation failed: {str(e)}")
     
     def _generate_direct(self, image_data: bytes, prompt: str) -> bytes:
-        """Generate using direct LTX-2 API"""
+        """Generate using official LTX Video API at api.ltx.video"""
         
         try:
             api_key = None
@@ -143,11 +145,11 @@ class LTX2VideoGenerator:
             if not api_key:
                 raise ValueError(
                     "LTX_API_KEY required!\n"
-                    "Get it from: https://ltx-2api.com/\n"
-                    "Add to secrets: LTX_API_KEY = 'your_key'"
+                    "Get it from: https://console.ltx.video/api-keys\n"
+                    "Add to secrets: LTX_API_KEY = 'ltxv_your_key'"
                 )
             
-            print("[LTX-2 Direct] Processing image...")
+            print("[LTX Video API] Processing image...")
             
             img = PILImage.open(BytesIO(image_data))
             if img.mode not in ('RGB', 'RGBA'):
@@ -156,70 +158,55 @@ class LTX2VideoGenerator:
             buffered = BytesIO()
             img.save(buffered, format="PNG")
             img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+            image_uri = f"data:image/png;base64,{img_base64}"
             
-            api_url = "https://ltx-2api.com/api/generate"
+            api_url = "https://api.ltx.video/v1/image-to-video"
             headers = {
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             }
             
             payload = {
-                "prompt": prompt or "smooth natural motion with audio",
-                "image": img_base64,
+                "image_uri": image_uri,
+                "prompt": prompt or "smooth natural motion with synchronized audio",
+                "model": "ltx-2-pro",
                 "duration": 8,
-                "resolution": "1080p",
-                "mode": "fast"
+                "resolution": "1920x1080"
             }
             
-            print(f"[LTX-2 Direct] Submitting generation request...")
+            print(f"[LTX Video API] Generating video with prompt: '{prompt}'")
+            print("[LTX Video API] This may take 1-2 minutes...")
             
-            response = requests.post(api_url, headers=headers, json=payload, timeout=30)
+            response = requests.post(api_url, headers=headers, json=payload, timeout=180)
             response.raise_for_status()
             
-            task_data = response.json()["data"]
-            task_id = task_data["task_id"]
+            video_data = response.content
             
-            print(f"[LTX-2 Direct] Task ID: {task_id}")
-            print("[LTX-2 Direct] Polling for completion (1-3 minutes)...")
+            print(f"[LTX Video API] Success! Generated {len(video_data)} bytes")
             
-            status_url = f"https://ltx-2api.com/api/status?task_id={task_id}"
+            return video_data
             
-            for i in range(60):
-                time.sleep(5)
-                
-                status_resp = requests.get(status_url, timeout=30)
-                status_resp.raise_for_status()
-                status_data = status_resp.json()["data"]
-                
-                status = status_data["status"]
-                
-                if status == "SUCCESS":
-                    video_url = status_data["response"][0]
-                    print(f"[LTX-2 Direct] Success! Downloading from {video_url}")
-                    
-                    video_resp = requests.get(video_url, timeout=120)
-                    video_resp.raise_for_status()
-                    
-                    print(f"[LTX-2 Direct] Generated {len(video_resp.content)} bytes")
-                    return video_resp.content
-                    
-                elif status == "FAILED":
-                    error_msg = status_data.get("error_message", "Unknown error")
-                    raise Exception(f"Generation failed: {error_msg}")
-                
-                print(f"[LTX-2 Direct] Status: {status} (attempt {i+1}/60)")
-            
-            raise Exception("Timeout waiting for video generation")
-            
+        except requests.exceptions.HTTPError as e:
+            error_detail = ""
+            try:
+                error_json = e.response.json()
+                error_detail = f": {error_json}"
+            except:
+                error_detail = f" (Status {e.response.status_code})"
+            raise Exception(f"LTX Video API request failed{error_detail}")
         except Exception as e:
-            raise Exception(f"LTX-2 Direct API failed: {str(e)}")
+            raise Exception(f"LTX Video API failed: {str(e)}")
     
     def get_info(self):
         """Get info about current configuration"""
         return {
             "method": self.method,
             "description": {
-                "replicate": "LTX-Video via Replicate (~5sec videos, uses existing token)",
-                "direct": "LTX-2 Direct API (10-60sec videos with audio, requires LTX_API_KEY)"
+                "replicate": "LTX-Video via Replicate (~5sec videos)",
+                "direct": "Official LTX Video API (8-60sec videos with audio, 4K support)"
+            }.get(self.method),
+            "api_url": {
+                "replicate": "replicate.com/lightricks/ltx-video",
+                "direct": "https://api.ltx.video/v1/image-to-video"
             }.get(self.method)
         }
