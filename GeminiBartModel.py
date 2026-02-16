@@ -55,7 +55,7 @@ class GeminiModel(AIModel):
             yield chunk.text
 
     def generate_image(self, prompt: str) -> bytes:
-        response = self.client.models.generated_images(
+        response = self.client.models.generate_images(
             model="imagen-3.0-generate-001",
             prompt=prompt,
             number_of_images=1,
