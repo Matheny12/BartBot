@@ -29,7 +29,7 @@ class GeminiModel(AIModel):
             formatted_history.append({"role": gemini_role, "parts": [{"text": clean_text}]})
         
         chat_session = self.client.chats.create(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash-lite",
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
                 tools=[types.Tool(google_search=types.GoogleSearch())]
