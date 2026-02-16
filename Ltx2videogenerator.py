@@ -45,7 +45,31 @@ class LTX2VideoGenerator:
         elif force == "replicate":
             return "replicate"
         
+        if STREAMLIT_AVAILABLE:
+            try:
+                force_secret = st.secrets.get("LTX_METHOD", "").lower()
+                if force_secret == "direct":
+                    return "direct"
+                elif force_secret == "replicate":
+                    return "replicate"
+            except:
+                pass
+        
+        ltx_key = None
+        if STREAMLIT_AVAILABLE:
+            try:
+                ltx_key = st.secrets.get("LTX_API_KEY")
+            except:
+                pass
+        if not ltx_key:
+            ltx_key = os.getenv("LTX_API_KEY")
+        
+        if ltx_key and ltx_key.startswith("ltxv_"):
+            print("[LTX] Found LTX_API_KEY, using direct API")
+            return "direct"
+        
         if REPLICATE_AVAILABLE:
+            print("[LTX] Using Replicate as fallback")
             return "replicate"
         
         return "direct"
