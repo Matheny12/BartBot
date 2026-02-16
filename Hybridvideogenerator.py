@@ -5,27 +5,36 @@ Uses AnimateDiff when available (local with GPU), falls back to Replicate (cloud
 """
 
 import os
-import streamlit as st
 from typing import Optional
 import base64
 from io import BytesIO
+
+try:
+    import streamlit as st
+    STREAMLIT_AVAILABLE = True
+except ImportError:
+    STREAMLIT_AVAILABLE = False
+    class st:
+        @staticmethod
+        def secrets():
+            return {}
+
 from PIL import Image as PILImage
+import requests
 
 try:
     from AnimateDiff import AnimateDiffGenerator, SimpleAnimateDiff
     ANIMATEDIFF_AVAILABLE = True
 except ImportError:
     ANIMATEDIFF_AVAILABLE = False
-    print("AnimateDiff not available, will use cloud API")
+    print("[HybridVideoGen] AnimateDiff not available")
 
 try:
     import replicate
     REPLICATE_AVAILABLE = True
 except ImportError:
     REPLICATE_AVAILABLE = False
-    print("Replicate not available")
-
-import requests
+    print("[HybridVideoGen] Replicate not available")
 
 
 class HybridVideoGenerator:
@@ -123,7 +132,11 @@ class HybridVideoGenerator:
     def _generate_replicate(self, image_data: bytes, prompt: str) -> bytes:
         """Generate using Replicate API"""
         try:
-            api_token = st.secrets.get("REPLICATE_API_TOKEN") or os.getenv("REPLICATE_API_TOKEN")
+            if STREAMLIT_AVAILABLE:
+                api_token = st.secrets.get("REPLICATE_API_TOKEN") or os.getenv("REPLICATE_API_TOKEN")
+            else:
+                api_token = os.getenv("REPLICATE_API_TOKEN")
+            
             if not api_token:
                 raise ValueError("REPLICATE_API_TOKEN not found in secrets or environment")
             
