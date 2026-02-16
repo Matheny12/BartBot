@@ -36,6 +36,13 @@ except ImportError:
     REPLICATE_AVAILABLE = False
     print("[HybridVideoGen] Replicate not available")
 
+try:
+    from SimpleVideoGenerator import UniversalVideoGenerator
+    SIMPLE_VIDEO_AVAILABLE = True
+except ImportError:
+    SIMPLE_VIDEO_AVAILABLE = False
+    print("[HybridVideoGen] SimpleVideoGenerator not available")
+
 
 class HybridVideoGenerator:
     """
@@ -55,17 +62,25 @@ class HybridVideoGenerator:
         force_method = os.getenv("FORCE_VIDEO_METHOD", "").lower()
         if force_method == "local":
             self.method = "local"
-            print("Forced to use LOCAL (AnimateDiff)")
+            print("[HybridVideoGen] Forced to use LOCAL (AnimateDiff)")
             return
         elif force_method == "replicate":
             self.method = "replicate"
-            print("Forced to use REPLICATE (cloud)")
+            print("[HybridVideoGen] Forced to use REPLICATE (cloud)")
+            return
+        elif force_method == "free":
+            self.method = "free"
+            print("[HybridVideoGen] Forced to use FREE methods")
+            return
+        
+        if SIMPLE_VIDEO_AVAILABLE:
+            self.method = "free"
+            print("[HybridVideoGen] Using FREE video generation (HuggingFace + Fallback)")
             return
         
         if REPLICATE_AVAILABLE:
             self.method = "replicate"
-            print("Using REPLICATE (fast, works everywhere)")
-            print("To use local AnimateDiff, set FORCE_VIDEO_METHOD=local")
+            print("[HybridVideoGen] Using REPLICATE (requires API token)")
             return
         
         if ANIMATEDIFF_AVAILABLE:
@@ -73,32 +88,41 @@ class HybridVideoGenerator:
                 import torch
                 if torch.cuda.is_available():
                     self.method = "local"
-                    print("GPU detected! Using LOCAL AnimateDiff")
-                    print("Note: First run will download ~5GB models (slow)")
+                    print("[HybridVideoGen] GPU detected! Using LOCAL AnimateDiff")
                     return
                 else:
-                    print("WARNING: No GPU and no Replicate - AnimateDiff will be VERY slow")
+                    print("[HybridVideoGen] WARNING: No GPU - AnimateDiff will be VERY slow")
                     self.method = "local"
                     return
             except:
                 pass
         
         self.method = None
-        print("ERROR: No video generation method available!")
+        print("[HybridVideoGen] ERROR: No video generation method available!")
     
     def generate_video(self, image_data: bytes, prompt: str = None) -> bytes:
         """Generate video using best available method"""
         
-        if self.method == "local":
+        if self.method == "free":
+            return self._generate_free(image_data, prompt)
+        elif self.method == "local":
             return self._generate_local(image_data, prompt)
         elif self.method == "replicate":
             return self._generate_replicate(image_data, prompt)
         else:
             raise Exception(
                 "No video generation method available!\n\n"
-                "For LOCAL (free): Install torch, diffusers, and AnimateDiff.py\n"
-                "For CLOUD: Install replicate and add REPLICATE_API_TOKEN to secrets"
+                "Install SimpleVideoGenerator.py for FREE video generation"
             )
+    
+    def _generate_free(self, image_data: bytes, prompt: str) -> bytes:
+        """Generate using FREE methods (HuggingFace + Fallback)"""
+        try:
+            generator = UniversalVideoGenerator()
+            return generator.generate_video(image_data, prompt)
+        except Exception as e:
+            print(f"[HybridVideoGen] Free generation failed: {e}")
+            raise
     
     def _generate_local(self, image_data: bytes, prompt: str) -> bytes:
         """Generate using local AnimateDiff"""
@@ -154,6 +178,7 @@ class HybridVideoGenerator:
             os.environ["REPLICATE_API_TOKEN"] = api_token
             
             print(f"[Replicate] Token found: {api_token[:10]}...")
+            
             img = PILImage.open(BytesIO(image_data))
             if img.mode not in ('RGB', 'RGBA'):
                 img = img.convert('RGB')
