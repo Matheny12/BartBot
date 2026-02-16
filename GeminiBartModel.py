@@ -56,7 +56,7 @@ class GeminiModel(AIModel):
 
     def generate_image(self, prompt: str) -> bytes:
         response = self.client.models.generate_content(
-            model="imagen-3.0-generate-001",
+            model="imagen-4.0-generate-001",
             contents=f"Generate a high-quality image of: {prompt}"
         )
         return response.generated_images[0].image_bytes
