@@ -30,10 +30,10 @@ class BartBotModel(AIModel):
         print(f"[BartBotModel] Video generator method is: {self.video_generator.method}")
 
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:
+        from google.genai import types
+
         if file_data:
             print("[BartBotModel] File detected, using Gemini for vision")
-            from google.genai import types
-            
             file_bytes = file_data.get('data') or file_data.get('bytes')
             file_mime = file_data.get('type') or file_data.get('mime')
             
@@ -51,16 +51,42 @@ class BartBotModel(AIModel):
                 except Exception as e:
                     yield f"Error analyzing image: {str(e)}"
                     return
-        
-        with self.llm.chat_session(system_prompt):
-            user_input = messages[-1]["content"]   
-            response_generator = self.llm.generate(
-                user_input, 
-                max_tokens=1024, 
-                streaming=True
+
+        try:
+            formatted_history = []
+            for m in messages[:-1]:
+                gemini_role = "model" if m["role"] == "assistant" else "user"
+                content = m["content"]
+                clean_text = content if not str(content).startswith("IMAGE_DATA:") else "[Image]"
+                formatted_history.append({"role": gemini_role, "parts": [{"text": clean_text}]})
+
+            chat_session = self.client.chats.create(
+                model="gemini-2.0-flash",
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    tools=[types.Tool(google_search=types.GoogleSearch())]
+                ),
+                history=formatted_history
             )
-            for token in response_generator:
-                yield token
+
+            response = chat_session.send_message(messages[-1]["content"])
+
+            if hasattr(response, 'text'):
+                yield response.text
+            elif isinstance(response, tuple):
+                for item in response:
+                    if hasattr(item, 'text'):
+                        yield item.text
+            else:
+                yield str(response)
+
+        except Exception as e:
+            print(f"[BartBotModel] Gemini failed, falling back to local LLM: {e}")
+            with self.llm.chat_session(system_prompt):
+                user_input = messages[-1]["content"]
+                response_generator = self.llm.generate(user_input, max_tokens=1024, streaming=True)
+                for token in response_generator:
+                    yield token
 
     def generate_image(self, prompt: str) -> bytes:
         from huggingface_hub import InferenceClient
